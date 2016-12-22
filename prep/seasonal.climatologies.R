@@ -14,6 +14,8 @@ source("func/proj.temp.R")
 #
 ## CREATES:
 # "data/SACTNseas_clim_v4.1.Rdata"
+# "data/SACTNseas_real_30.Rdata"
+# "data/SACTNseas_0.1_30.Rdata"
 #############################################################################
 
 
@@ -43,6 +45,7 @@ SACTNseas_clim_v4.1 <- ddply(SACTNseas_clim_v4.1, .(site, src, index), summarise
               Wmax = max(temp[seas == "Winter"], na.rm = T),
               Spmin = min(temp[seas == "Spring"], na.rm = T),
               Spmax = max(temp[seas == "Spring"], na.rm = T))
+  ## NB: If you have loaded the 'biomod2' package, the following melt function will not function properly
 SACTNseas_clim_v4.1 <- melt(SACTNseas_clim_v4.1, id.vars = c("site","src","index"),
                             variable.name = "seas", value.name = "temp")
 SACTNseas_clim_v4.1 <- SACTNseas_clim_v4.1[order(SACTNseas_clim_v4.1$index),]
@@ -54,4 +57,4 @@ save(SACTNseas_clim_v4.1, file = "data/SACTNseas_clim_v4.1.Rdata")
 SACTNseas_real_30 <- ddply(SACTNseas_clim_v4.1, .(index), proj.temp, "real", 3, .parallel = T)
 save(SACTNseas_real_30, file = "data/SACTNseas_real_30.Rdata")
 SACTNseas_0.1_30 <- ddply(SACTNseas_clim_v4.1, .(index), proj.temp, 0.1, 3, .parallel = T)
-save(SACTNseas_real_30, file = "data/SACTNseas_real_30.Rdata")
+save(SACTNseas_0.1_30, file = "data/SACTNseas_0.1_30.Rdata")
