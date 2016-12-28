@@ -1,7 +1,7 @@
 #############################################################################
 ###"func/decadal.trend.R"
 ## This script does:
-# 1. Runs a GLS AR2 model on a time series
+# 1. Runs a GLS AR2 model on a monthly time series
 # 2. Provides a decadal trend
 ## NB: Just because this function runs on shorter (<30 year) time series, does NOT mean you should trust the results...
   ## You've been warned...

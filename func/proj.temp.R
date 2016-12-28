@@ -18,10 +18,12 @@ load("~/SACTN/data/SACTNmonthly_v4.1.Rdata")
 #
 #############################################################################
 
-# Testing
-df <- filter(SACTNseas_clim_v4.1, index == "Port Nolloth/ SAWS")
-trend <- "real"
-dec <- 3
+## Testing
+# df <- filter(SACTNseas_clim_v4.1, index == "Port Nolloth/ SAWS")
+# df <- sites_trend[1,]
+# trend <- "real"
+# dec <- 3
+##
 
 proj.temp <- function(df, trend, dec){
   if(!(is.numeric(trend))){

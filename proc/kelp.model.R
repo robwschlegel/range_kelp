@@ -47,11 +47,18 @@ SACTNseas_clim_v4.1 <- data.frame(SACTNseas_clim_v4.1)
 # Coerce abiotic data for model use
 sa_bathy <- sa_bathy[sa_bathy$depth >= -250,]
 
+# Wide format
+SACTNseas <- SACTNseas_clim_v4.1[,c(6,7,4,5)]
+SACTNseas <- dcast(SACTNseas, lon + lat ~ seas, value.var = "temp", mean)
+# SACTNseas[,1:2] <- apply(SACTNseas[,1:2], 1, round_any, 1)
+# sa_bathy[,1:2] <- apply(sa_bathy[,1:2], 1, round_any, 1)
+expl <- merge(SACTNseas, sa_bathy, by.x = c("lon", "lat"), all = T)
+
 # Create pseudoabsence points
 biomod_data <- BIOMOD_FormatingData(
   resp.var = resp,
   expl.var = expl,
-  resp.xy = xy,
+  resp.xy = coords,
   resp.name = speciesName,
   PA.nb.rep = 1,
   PA.nb.absences = 2100,

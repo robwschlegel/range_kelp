@@ -11,3 +11,7 @@ Projected range expansions of kelps in South Africa
 * Created directory structure
 * Created initial and projected seasonal min/ max climatologies
 * Prepared data for use with biomod2
+
+## 2016/12/28
+* Calculated HiRes daily climatologies and decadal trends
+* Calculated exceedences given projected trends

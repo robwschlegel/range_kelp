@@ -45,7 +45,7 @@ SACTNseas_clim_v4.1 <- ddply(SACTNseas_clim_v4.1, .(site, src, index), summarise
               Wmax = max(temp[seas == "Winter"], na.rm = T),
               Spmin = min(temp[seas == "Spring"], na.rm = T),
               Spmax = max(temp[seas == "Spring"], na.rm = T))
-  ## NB: If you have loaded the 'biomod2' package, the following melt function will not function properly
+  ## NB: If you have loaded the 'biomod2' package, melt will not function properly
 SACTNseas_clim_v4.1 <- melt(SACTNseas_clim_v4.1, id.vars = c("site","src","index"),
                             variable.name = "seas", value.name = "temp")
 SACTNseas_clim_v4.1 <- SACTNseas_clim_v4.1[order(SACTNseas_clim_v4.1$index),]
