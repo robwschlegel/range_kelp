@@ -15,3 +15,6 @@ Projected range expansions of kelps in South Africa
 ## 2016/12/28
 * Calculated HiRes daily climatologies and decadal trends
 * Calculated exceedences given projected trends
+
+## 2016/01/03
+* Calculated exceedence stats
