@@ -18,3 +18,7 @@ Projected range expansions of kelps in South Africa
 
 ## 2016/01/03
 * Calculated exceedence stats
+
+## 2016/01/04
+* Created animations of daily climatologies
+* Created animations of exceedence projections

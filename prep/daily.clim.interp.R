@@ -117,9 +117,9 @@ for(i in 1:366) {
   # Not filling in gaps on west and south coast as these gaps exist due to intense spatial differences in real temperatures
 # daily_clim_hiRes[2,] <- daily_clim_hiRes[3,]+(daily_clim_hiRes[3,]-daily_clim_hiRes[4,])
 # daily_clim_hiRes[1,] <- daily_clim_hiRes[2,]+(daily_clim_hiRes[2,]-daily_clim_hiRes[3,])
-daily_clim_hiRes[278,] <- mean(daily_clim_hiRes[277,] + daily_clim_hiRes[279,])
+daily_clim_hiRes[278,] <- (daily_clim_hiRes[277,] + daily_clim_hiRes[279,])/2
 daily_clim_hiRes[329:340,] <- apply(daily_clim_hiRes[c(328,341),], 2, function(x){(seq(x[1], x[2], length.out = 14))[2:13]})
-daily_clim_hiRes[348,] <- daily_clim_hiRes[347,]+(daily_clim_hiRes[347,]-daily_clim_hiRes[346,])
+# daily_clim_hiRes[348,] <- daily_clim_hiRes[347,]+(daily_clim_hiRes[347,]-daily_clim_hiRes[346,]) # This last dot is mostly over land
 
 # Add additional bits and save
 daily_clim_hiRes <- data.frame(lon = outCoords$lon, lat = outCoords$lat, daily_clim_hiRes)
