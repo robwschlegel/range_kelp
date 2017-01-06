@@ -26,3 +26,7 @@ Projected range expansions of kelps in South Africa
 ## 2016/01/05
 * Corrected issues in animation legends
 * Corrected colour scales of animations
+
+## 2016/01/06
+* Calculated exceedences below certain thresholds
+* Created static images of those results

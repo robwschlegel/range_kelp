@@ -55,33 +55,53 @@ sa_lats <- c(-36, -26); sa_lons <- c(14, 34)
 # For use with rasters
 mean_no_NA <- function(x){mean(x, na.rm =T)}
 
+# Breaks for plotting duration above a threshold
+breaks_above <- seq(0, 190, 31)
+
+# Breaks for plotting duration below a threshold
+breaks_below <- seq(0, 366, 24)
 
 # 3. Create rasters -------------------------------------------------------
 
-# Create event data
-dur <- stats_20_0.1_0[,c(1:6)]
-dur <- dur[dur$stat == "mean",]
-dur$EID <- 1:length(dur$lon)
-colnames(dur) <- c("index", "X", "Y", "exceede", "stat", "Z", "EID")
-dur <- as.EventData(dur)
-# Grid it
-durGrid <- findCells(dur, sa_grid)
-dur2 <- merge(dur, durGrid, by = c("EID"), all = FALSE)
-durData <- combineEvents(dur, durGrid, FUN = mean_no_NA)
-durDataGrid <- merge(durData, sa_grid, by = c("PID", "SID"), all = FALSE)
-durDataGrid <- merge(durDataGrid, dur2[,c(5,6,8,9)], by = c("PID", "SID"), all = FALSE)
-durDataGrid <- durDataGrid[order(durDataGrid[,2], durDataGrid[,1], durDataGrid[,4]), ]
+# Gridding function
+proj_select <- stats_20_0.1_0 # Tester...
+# Use numerical values to select the stat you want to project
+# 6 = "duration", 7 = "int_max", 8 = "int_cum", 9 = "int_max_abs", 10 = "int_cum_abs" 
+grid.dat <- function(proj_select, stat_select){
+  dat <- proj_select
+  dat$EID <- 1:length(dat$lon)
+  dat <- dat[dat$stat == "mean", c(2:4, stat_select, 11)]
+  # Create event data
+  colnames(dat) <- c("X", "Y", "exceede", "Z", "EID")
+  dat <- as.EventData(dat)
+  # Grid it
+  datGrid <- findCells(dat, sa_grid)
+  dat2 <- merge(dat, datGrid, by = c("EID"), all = FALSE)
+  datData <- combineEvents(dat, datGrid, FUN = mean_no_NA)
+  datDataGrid <- merge(datData, sa_grid, by = c("PID", "SID"), all = FALSE)
+  datDataGrid <- merge(datDataGrid, dat2[,c(4,6,7)], by = c("PID", "SID"), all = FALSE)
+  datDataGrid <- datDataGrid[order(datDataGrid[,2], datDataGrid[,1], datDataGrid[,4]), ]
+  # Breaks for plotting duration
+  # CUrrently run in the figure function
+  # datDataGrid$bins <- cut(datDataGrid$Z, breaks = breaks)
+  return(datDataGrid)
+}
+# test <- grid.dat(stats_20_inSitu_0, stat_select = 6)
 
-# Breaks for plotting
-breaks <- seq(0, 190, 31)
-durDataGrid$bins <- cut(durDataGrid$Z, breaks = breaks)
+## Grid data
+# In situ
+grid_20_inSitu_0 <- grid.dat(stats_20_inSitu_0, 6)
 
-# Subsetted data frames for ease of plotting
-durDataGrid_within <- droplevels(durDataGrid[durDataGrid$exceede == "within" & complete.cases(durDataGrid$Z),])
-durDataGrid_NA <- droplevels(durDataGrid[is.na(durDataGrid$Z),])
-durDataGrid_NA$exceede <- as.factor(durDataGrid_NA$exceede)
-# durDataGrid_NA$exceede <- factor(durDataGrid_NA$exceede,levels(as.factor(durDataGrid_NA$exceede))[c(2,1)])
+# Static 0.1
+grid_20_0.1_0 <- grid.dat(stats_20_0.1_0, 6)
 
+## Grid data BELOW a threshold
+grid_19_0.1_0 <- grid.dat(stats_19_0.1_0, 6)
+grid_18_0.1_0 <- grid.dat(stats_18_0.1_0, 6)
+grid_17_0.1_0 <- grid.dat(stats_17_0.1_0, 6)
+grid_16_0.1_0 <- grid.dat(stats_16_0.1_0, 6)
+grid_15_0.1_0 <- grid.dat(stats_15_0.1_0, 6)
+grid_14_0.1_0 <- grid.dat(stats_14_0.1_0, 6)
 
 # 4. Create figures -------------------------------------------------------
 
@@ -95,46 +115,76 @@ site_names2[1,2] <- "Cape\nAgulhas"
 site_names2[4,2] <- "Port\nElizabeth" # South Coast
 site_names3 <- site_names[8:12,] # South Coast
 
-# Prerender the figure
-sa_plot <- ggplot() + bw_update +
-  geom_polygon(data = sa_shore, aes(x = X, y = Y, group = PID), show.legend = FALSE, fill = "grey60") +
-  geom_path(data = sa_provinces_new, aes(x = lon, y = lat, group = group), size = 0.5, colour = "grey40") +
-  geom_path(data = africa_borders, aes(x = lon, y = lat, group = group), size = 1.0, colour = "black") +
-  geom_text(data = site_names1, aes(lon, lat, label = site), hjust = 1.15, vjust = 0.5, size = 3, colour = "white") +
-  geom_text(data = site_names2, aes(lon, lat, label = site), hjust = -0.15, vjust = 0.8, size = 3, colour = "white", 
-            angle = 330, lineheight = 0.8) +
-  geom_text(data = site_names3, aes(lon, lat, label = site), hjust = -0.15, vjust = 0.5, size = 3, colour = "white") +
-  scale_y_continuous(breaks = seq(-34,-28,2)) +
-  scale_x_continuous(breaks = seq(18,30,4)) +
-  scaleBar(lon = 30, lat = -34.2, distanceLon = 100, distanceLat = 20, distanceLegend = 40, dist.unit = "km",
-           arrow.length = 90, arrow.distance = 60, arrow.North.size = 5) +
-  coord_map(xlim = sa_lons, ylim = sa_lats, projection = "mercator") +
-  theme(plot.title = element_text(size = 10, hjust = 0.5),
-        plot.subtitle = element_text(size = 10, hjust = 0.5),
-        axis.title = element_blank(),
-        panel.background = element_rect(fill = "grey30"),
-        legend.justification = c(1,0), legend.position = c(0.55, 0.45),
-        legend.background = element_rect(fill = "white", colour = "black"),
-        legend.title = element_text(size = 10),
-        legend.text = element_text(size = 10),
-        legend.direction = "vertical",
-        legend.box = "horizontal")
-sa_plot
+# Currently only works for duration
+# Other stats will not plot nor be labelled correctly
+## Testing ##
+durDataGrid <- grid_19_0.1_0 
+type = "0.1"; thresh = 20; proj = 0; side = "below"
+## END ##
+# 'type', 'side' and 'proj' are used in the legend and subtitle
+# 'thresh' and 'proj' are used to tell ggplot what to save the image as
+sa.plot.dur <- function(durDataGrid, type, thresh, proj, side){
+  if(side == "below"){
+    durDataGrid$bins <- cut(durDataGrid$Z, breaks = breaks_below)
+    l.y <- 0.35 # Change y axis of legend to compensate for longer legend
+  } else if(side == "above"){
+    durDataGrid$bins <- cut(durDataGrid$Z, breaks = breaks_above)
+    l.y <- 0.45
+  }
+  durDataGrid_within <- durDataGrid[durDataGrid$exceede == "within",]
+  durDataGrid_NA <- droplevels(durDataGrid[is.na(durDataGrid$Z) & durDataGrid$exceede != "NA",])
+  durDataGrid_NA$exceede <- as.factor(durDataGrid_NA$exceede)
+  sa_plot_dur <- ggplot() + bw_update +
+    geom_polygon(data = sa_shore, aes(x = X, y = Y, group = PID), show.legend = FALSE, fill = "grey60") +
+    geom_path(data = sa_provinces_new, aes(x = lon, y = lat, group = group), size = 0.5, colour = "grey40") +
+    geom_path(data = africa_borders, aes(x = lon, y = lat, group = group), size = 1.0, colour = "black") +
+    geom_polygon(data = durDataGrid_within, aes(x = X, y = Y, group = paste(durDataGrid_within$PID, durDataGrid_within$SID,
+                                                                            sep = "_"), fill = bins), colour = NA, size = 0.1) +
+    geom_polygon(data = durDataGrid_NA, aes(x = X, y = Y, group = paste(durDataGrid_NA$PID, durDataGrid_NA$SID, sep = "_"),
+                                            colour = durDataGrid_NA$exceede), fill = NA, size = 0.2, show.legend = TRUE) +
+    scale_fill_viridis(discrete = TRUE, drop = FALSE) +
+    scale_colour_discrete(breaks = rev(levels(durDataGrid_NA$exceede))) +
+    guides(fill = guide_legend(paste("Duration (days)\n", side, " ", thresh, "°C", sep = ""), order = 2),
+           colour = guide_legend("Relation to threshold", override.aes = list(size = 4), order = 1)) +
+    ggtitle("Exceedence", subtitle = paste("Projections based on ", type, " trends after ", proj, " decade(s)")) +
+    geom_text(data = site_names1, aes(lon, lat, label = site), hjust = 1.15, vjust = 0.5, size = 3, colour = "white") +
+    geom_text(data = site_names2, aes(lon, lat, label = site), hjust = -0.15, vjust = 0.8, size = 3, colour = "white", 
+              angle = 330, lineheight = 0.8) +
+    geom_text(data = site_names3, aes(lon, lat, label = site), hjust = -0.15, vjust = 0.5, size = 3, colour = "white") +
+    scale_y_continuous(breaks = seq(-34,-28,2)) +
+    scale_x_continuous(breaks = seq(18,30,4)) +
+    scaleBar(lon = 30, lat = -34.2, distanceLon = 100, distanceLat = 20, distanceLegend = 40, dist.unit = "km",
+             arrow.length = 90, arrow.distance = 60, arrow.North.size = 5) +
+    coord_map(xlim = sa_lons, ylim = sa_lats, projection = "mercator") +
+    theme(plot.title = element_text(size = 10, hjust = 0.5),
+          plot.subtitle = element_text(size = 10, hjust = 0.5),
+          axis.title = element_blank(),
+          panel.background = element_rect(fill = "grey30"),
+          legend.justification = c(1,0), legend.position = c(0.55, l.y),
+          legend.background = element_rect(fill = "white", colour = "black"),
+          legend.title = element_text(size = 10),
+          legend.text = element_text(size = 10),
+          legend.direction = "vertical",
+          legend.box = "horizontal")
+  sa_plot_dur
+  ggsave(paste("graph/sa_plot_exceedence_dur_", thresh,"_",type,"_",proj,".png", sep = ""), height = 6, width = 10)
+}
 
-# Then add the data
-sa_plot_dur <- sa_plot +
-  geom_polygon(data = durDataGrid_within, aes(x = X, y = Y, group = paste(durDataGrid_within$PID, durDataGrid_within$SID,
-                                                                          sep = "_"), fill = bins), colour = NA, size = 0.1) +
-  geom_polygon(data = durDataGrid_NA, aes(x = X, y = Y, group = paste(durDataGrid_NA$PID, durDataGrid_NA$SID, sep = "_"),
-                                          colour = durDataGrid_NA$exceede), fill = NA, size = 0.2, show.legend = TRUE) +
-  scale_fill_viridis(discrete = TRUE) +
-  scale_colour_discrete(breaks = rev(levels(durDataGrid_NA$exceede))) +
-  guides(fill = guide_legend("Duration (days)\n above 20°C", order = 2),
-         colour = guide_legend("Relation to threshold", override.aes = list(size = 4), order = 1)) +
-  ggtitle("Exceedence", subtitle = "Projections based on in situ trends after 0 decade(s)")
-sa_plot_dur
-ggsave("graph/sa_plot_exceedence_dur.png", height = 6, width = 10)
+## Exceedence above thresholds
+# In situ figures
+sa.plot.dur(grid_20_inSitu_0, "in situ", 20, 0, "above")
 
+# Static 0.1C figures
+sa.plot.dur(grid_20_0.1_0, "0.1", 20, 0, "above")
+
+## Exceedence below thresholds
+# Static 0.1C figures
+sa.plot.dur(grid_19_0.1_0, "0.1", 19, 0, "below")
+sa.plot.dur(grid_18_0.1_0, "0.1", 18, 0, "below")
+sa.plot.dur(grid_17_0.1_0, "0.1", 17, 0, "below")
+sa.plot.dur(grid_16_0.1_0, "0.1", 16, 0, "below")
+sa.plot.dur(grid_15_0.1_0, "0.1", 15, 0, "below")
+sa.plot.dur(grid_14_0.1_0, "0.1", 14, 0, "below")
 
 # 5. Create exceedence animation function ---------------------------------
 
@@ -146,23 +196,24 @@ ggsave("graph/sa_plot_exceedence_dur.png", height = 6, width = 10)
 
 
 # Combine all projections
-# Real
-stats_20_real <- rbind(stats_20_real_0, stats_20_real_1, stats_20_real_2, stats_20_real_3, stats_20_real_4, stats_20_real_5)
-stats_20_real$decade <- c(rep(0,518), rep(1,518), rep(2,518), rep(3,518), rep(4,518), rep(5,518))
-stats_20_real$proj <- "in situ"
+# inSitu
+stats_20_inSitu <- rbind(stats_20_inSitu_0, stats_20_inSitu_1, stats_20_inSitu_2, stats_20_inSitu_3, stats_20_inSitu_4, stats_20_inSitu_5)
+stats_20_inSitu$decade <- c(rep(0,518), rep(1,518), rep(2,518), rep(3,518), rep(4,518), rep(5,518))
+stats_20_inSitu$proj <- "in situ"
 # Static
 stats_20_0.1 <- rbind(stats_20_0.1_0, stats_20_0.1_1, stats_20_0.1_2, stats_20_0.1_3, stats_20_0.1_4, stats_20_0.1_5)
-stats_20_0.1$decade <- c(rep(0,672), rep(1,672), rep(2,672), rep(3,672), rep(4,672), rep(5,672))
+stats_20_0.1$decade <- c(rep(0,696), rep(1,696), rep(2,696), rep(3,696), rep(4,696), rep(5,696))
 stats_20_0.1$proj <- "0.1"
 
 # The gif function
 # Testing
 decade_select <- 3
-proj_select <- stats_20_real
-stat_select <- 7
+proj_select <- stats_20_0.1
+stat_select <- 6
+side = "above"; thresh = 20
 # Use numerical values to select the stat you want to project
 # 6 = "duration", 7 = "int_max", 8 = "int_cum", 9 = "int_max_abs", 10 = "int_cum_abs" 
-draw.exc.fig <- function(decade_select, proj_select, stat_select){
+draw.exc.fig <- function(decade_select, proj_select, stat_select, side, thresh){
   dat <- proj_select
   if(stat_select == 6){
     colnames(dat)[6] <- "duration (days)"
@@ -181,16 +232,21 @@ draw.exc.fig <- function(decade_select, proj_select, stat_select){
   excDataGrid <- merge(excDataGrid, exc2[,c(4,6,7)], by = c("PID", "SID"), all = FALSE)
   excDataGrid <- excDataGrid[order(excDataGrid[,2], excDataGrid[,1], excDataGrid[,4]), ]
   # Breaks for plotting
-  if(stat_select == 6){
-    breaks <- seq(0, 190, 31)
+  if(stat_select == 6 & side == "above"){
+    breaks <- breaks_above
+    l.y <- 0.35
+  } else if(stat_select == 6 & side == "below"){
+    breaks <- breaks_below
+    l.y <- 0.45
   } else {
     breaks <- round_any(seq(0, max(dat2[,4], na.rm = T), length.out = 7), 0.1)
     breaks[length(breaks)] <- round_any(max(dat2[,4], na.rm = T), 0.1)+0.1
+    l.y <- 0.45
   }
   excDataGrid$bins <- cut(excDataGrid$Z, breaks = breaks)
   # Subsetted data frames for ease of plotting
   excDataGrid_within <- excDataGrid[excDataGrid$exceede == "within",]
-  excDataGrid_NA <- droplevels(excDataGrid[is.na(excDataGrid$Z),])
+  excDataGrid_NA <- droplevels(excDataGrid[is.na(excDataGrid$Z) & excDataGrid$exceede != "NA",])
   excDataGrid_NA$exceede <- as.factor(excDataGrid_NA$exceede)
   # Subtitle data
   if(dat$proj[1] == "in situ"){
@@ -211,9 +267,9 @@ draw.exc.fig <- function(decade_select, proj_select, stat_select){
                                                                             sep = "_"), fill = bins), colour = NA, size = 0.1) +
     geom_polygon(data = excDataGrid_NA, aes(x = X, y = Y, group = paste(excDataGrid_NA$PID, excDataGrid_NA$SID, sep = "_"),
                                             colour = excDataGrid_NA$exceede), fill = NA, size = 0.2, show.legend = TRUE) +
-    scale_fill_viridis(discrete = TRUE, drop = FALSE, breaks = levels(excDataGrid_within$bins)) +
+    scale_fill_viridis(discrete = TRUE, drop = FALSE) +
     scale_colour_discrete(breaks = rev(levels(excDataGrid_NA$exceede))) +
-    guides(fill = guide_legend(paste(colnames(dat[stat_select]),"\n above 20°C", sep = ""), order = 2),
+    guides(fill = guide_legend(paste(colnames(dat[stat_select]),"\n",side," ",thresh,"°C", sep = ""), order = 2),
            colour = guide_legend("Relation to threshold", override.aes = list(size = 4), order = 1)) +
     ggtitle("Exceedence", subtitle = subtitle) +
     scale_y_continuous(breaks = seq(-34,-28,2)) +
@@ -237,37 +293,37 @@ draw.exc.fig <- function(decade_select, proj_select, stat_select){
 
 # 6. Create all of the gifs -----------------------------------------------
 
-## Real
+## inSitu
 # Duration
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(i, stats_20_real, 6)
+    draw.exc.fig(i, stats_20_inSitu, 6, "above", 20)
   })
 }
 # Create gif for a single time series
-system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_real_dur_anim.gif")) ## 18 seconds
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_inSitu_dur_anim.gif")) ## 18 seconds
 # Int_max
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(i, stats_20_real, 7)
+    draw.exc.fig(i, stats_20_inSitu, 7, "above", 20)
   })
 }
 # Create gif for a single time series
-system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_real_int_max_anim.gif")) ## xx seconds
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_inSitu_int_max_anim.gif")) ## xx seconds
 # Int_cum
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(i, stats_20_real, 8)
+    draw.exc.fig(i, stats_20_inSitu, 8, "above", 20)
   })
 }
 # Create gif for a single time series
-system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_real_int_cum_anim.gif")) ## xx seconds
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_inSitu_int_cum_anim.gif")) ## xx seconds
 
 ## Static
 # Duration
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(i, stats_20_0.1, 6)
+    draw.exc.fig(i, stats_20_0.1, 6, "above", 20)
   })
 }
 # Create gif for a single time series
@@ -275,7 +331,7 @@ system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name
 # Int_max
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(i, stats_20_0.1, 7)
+    draw.exc.fig(i, stats_20_0.1, 7, "above", 20)
   })
 }
 # Create gif for a single time series
@@ -283,7 +339,7 @@ system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name
 # Int_cum
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(i, stats_20_0.1, 8)
+    draw.exc.fig(i, stats_20_0.1, 8, "above", 20)
   })
 }
 # Create gif for a single time series
