@@ -6,6 +6,7 @@
 # 3. Create rasters
 # 4. Create figures
 # 5. Create animations
+# 6. Create range figure
 ## DEPENDS ON:
 library(sp)
 library(raster)
@@ -174,3 +175,8 @@ animate.daily.fig <- function() {
 }
 # Create gif for a single time series
 system.time(saveGIF(animate.daily.fig(), interval = 0.1, ani.width = 800, movie.name = "daily_HiRes_anim.gif")) ## 701 seconds
+
+
+# 6. Create range figure --------------------------------------------------
+
+
