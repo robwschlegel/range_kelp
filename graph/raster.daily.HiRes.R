@@ -85,7 +85,7 @@ site_names3 <- site_names[8:12,] # South Coast
 # Breaks for plotting
 breaks <- seq(10,28,2)
 day1DataGrid$bins <- cut(day1DataGrid$Z, breaks = breaks)
-test <- day1DataGrid[day1DataGrid$bins == levels(day1DataGrid$bins)[8],]
+# test <- day1DataGrid[day1DataGrid$bins == levels(day1DataGrid$bins)[8],]
 
 # Prerender the figure
 sa_plot <- ggplot() + bw_update +
