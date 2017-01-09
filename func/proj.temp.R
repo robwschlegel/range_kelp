@@ -11,6 +11,7 @@ library(dplyr)
 library(doMC); doMC::registerDoMC(cores = 4)
 source("func/decadal.trend.R")
 load("~/SACTN/data/SACTNmonthly_v4.1.Rdata")
+load("data/trend_hiRes.Rdata")
 ## USED BY:
 #"proc/climate.projections.R"
 ## CREATES:
@@ -20,13 +21,13 @@ load("~/SACTN/data/SACTNmonthly_v4.1.Rdata")
 ## Testing
 # df <- filter(SACTNseas_clim_v4.1, index == "Port Nolloth/ SAWS")
 # df <- sites_trend[1,]
-# trend <- "real"
+# trend <- "in situ"
 # dec <- 3
 ##
 
 # For data frames with one temperature column and site names
 proj.temp <- function(df, trend, dec){
-  if(!(is.numeric(trend))){
+  if(trend == "in situ"){
     df2 <- filter(SACTNmonthly_v4.1, index == df$index[1])
     trend <- decadal.trend(df2)
   }
@@ -36,10 +37,10 @@ proj.temp <- function(df, trend, dec){
 
 
 ## Testing
-df <- daily_clim_hiRes
-trend <- "in situ"
-trend <- 0.1
-dec <- 3
+# df <- daily_clim_hiRes
+# trend <- "in situ"
+# trend <- 0.1
+# dec <- 3
 ##
 
 # For data frames with a full 366 day climatology

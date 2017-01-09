@@ -54,7 +54,7 @@ save(SACTNseas_clim_v4.1, file = "data/SACTNseas_clim_v4.1.Rdata")
 
 
 # 3. Create projected temperature data frames -----------------------------
-SACTNseas_real_30 <- ddply(SACTNseas_clim_v4.1, .(index), proj.temp, "real", 3, .parallel = T)
-save(SACTNseas_real_30, file = "data/SACTNseas_real_30.Rdata")
+SACTNseas_inSitu_30 <- ddply(SACTNseas_clim_v4.1, .(index), proj.temp, "in situ", 3, .parallel = T)
+save(SACTNseas_inSitu_30, file = "data/SACTNseas_inSitu_30.Rdata")
 SACTNseas_0.1_30 <- ddply(SACTNseas_clim_v4.1, .(index), proj.temp, 0.1, 3, .parallel = T)
 save(SACTNseas_0.1_30, file = "data/SACTNseas_0.1_30.Rdata")

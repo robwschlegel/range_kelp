@@ -137,7 +137,7 @@ site_names3 <- site_names[8:12,] # South Coast
 # 9 = "duration", 10 = "int_max", 11 = "int_cum", 12 = "int_max_abs", 13 = "int_cum_abs" 
 draw.exc.fig <- function(df, decade, stat){
   if(stat == 9){
-    colnames(df)[9] <- "Duration (days)"
+    colnames(df)[9] <- "Days"
   }
   if(df$below[1] == TRUE) side = "below"
   if(df$below[1] == "FALSE") side = "above"
