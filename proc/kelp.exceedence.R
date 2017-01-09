@@ -11,6 +11,7 @@ library(reshape2)
 library(magrittr)
 library(RmarineHeatWaves)
 library(doMC); doMC::registerDoMC(4)
+source("func/proj.temp.R")
 # source("func/proj.temp.R")
 ## USED BY:
 #
@@ -24,29 +25,24 @@ library(doMC); doMC::registerDoMC(4)
 load("data/daily_clim_hiRes.Rdata")
 daily_clim_hiRes <- cbind(index = 1:length(daily_clim_hiRes$lon), daily_clim_hiRes)
 
-# In situ trends
-load("data/trend_hiRes.Rdata")
-
 
 # 2. Project daily clims given different trends ---------------------------
 
 # In situ projections
 # These data frames are slightly smaller than other projection bases 
 # as not every pixel has an ins situ trend for it
-hiRes_inSitu_0 <- cbind(daily_clim_hiRes[complete.cases(trend_hiRes$trend),], trend = "in situ", decade = 0)
-hiRes_inSitu_1 <- cbind(hiRes_inSitu_0[,1:3], (hiRes_inSitu_0[,4:369] + (trend_hiRes$trend[complete.cases(trend_hiRes$trend)]*1)), trend = "in situ", decade = 1)
-hiRes_inSitu_2 <- cbind(hiRes_inSitu_0[,1:3], (hiRes_inSitu_0[,4:369] + (trend_hiRes$trend[complete.cases(trend_hiRes$trend)]*2)), trend = "in situ", decade = 2)
-hiRes_inSitu_3 <- cbind(hiRes_inSitu_0[,1:3], (hiRes_inSitu_0[,4:369] + (trend_hiRes$trend[complete.cases(trend_hiRes$trend)]*3)), trend = "in situ", decade = 3)
-hiRes_inSitu_4 <- cbind(hiRes_inSitu_0[,1:3], (hiRes_inSitu_0[,4:369] + (trend_hiRes$trend[complete.cases(trend_hiRes$trend)]*4)), trend = "in situ", decade = 4)
-hiRes_inSitu_5 <- cbind(hiRes_inSitu_0[,1:3], (hiRes_inSitu_0[,4:369] + (trend_hiRes$trend[complete.cases(trend_hiRes$trend)]*5)), trend = "in situ", decade = 5)
+hiRes_inSitu <- data.frame()
+for(i in 0:5){
+  dat <- proj.temp.hiRes(daily_clim_hiRes, "in situ", i)
+  hiRes_inSitu <- rbind(hiRes_inSitu, dat)
+}
 
 # Static 0.1C projection
-hiRes_0.1_0 <- cbind(daily_clim_hiRes, trend = "0.1", decade = 0)
-hiRes_0.1_1 <- cbind(daily_clim_hiRes[,1:3], (daily_clim_hiRes[,4:369] + (0.1*1)), trend = "0.1", decade = 1)
-hiRes_0.1_2 <- cbind(daily_clim_hiRes[,1:3], (daily_clim_hiRes[,4:369] + (0.1*2)), trend = "0.1", decade = 2)
-hiRes_0.1_3 <- cbind(daily_clim_hiRes[,1:3], (daily_clim_hiRes[,4:369] + (0.1*3)), trend = "0.1", decade = 3)
-hiRes_0.1_4 <- cbind(daily_clim_hiRes[,1:3], (daily_clim_hiRes[,4:369] + (0.1*4)), trend = "0.1", decade = 4)
-hiRes_0.1_5 <- cbind(daily_clim_hiRes[,1:3], (daily_clim_hiRes[,4:369] + (0.1*5)), trend = "0.1", decade = 5)
+hiRes_0.1 <- data.frame()
+for(i in 0:5){
+  dat <- proj.temp.hiRes(daily_clim_hiRes, 0.1, i)
+  hiRes_0.1 <- rbind(hiRes_0.1, dat)
+}
 
 
 # 3. Calculate threshold exceedence stats  --------------------------------
@@ -114,30 +110,27 @@ exceedence.stats <- function(dat, threshold = 20, below = FALSE){
 }
 # system.time(test <- ddply(hiRes_inSitu_1, .(index), exceedence.stats, .progress = "text"))
 
-## Calculate exceedence stats
+## Calculate exceedence stats ABOVE a threshold
 # In situ
-stats_20_inSitu_0 <- ddply(hiRes_inSitu_0, .(index), exceedence.stats, .parallel = T)
-stats_20_inSitu_1 <- ddply(hiRes_inSitu_1, .(index), exceedence.stats, .parallel = T)
-stats_20_inSitu_2 <- ddply(hiRes_inSitu_2, .(index), exceedence.stats, .parallel = T)
-stats_20_inSitu_3 <- ddply(hiRes_inSitu_3, .(index), exceedence.stats, .parallel = T)
-stats_20_inSitu_4 <- ddply(hiRes_inSitu_4, .(index), exceedence.stats, .parallel = T)
-stats_20_inSitu_5 <- ddply(hiRes_inSitu_5, .(index), exceedence.stats, .parallel = T)
+stats_inSitu_20 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, .parallel = T)
 
 # Static 0.1C
-stats_20_0.1_0 <- ddply(hiRes_0.1_0, .(index), exceedence.stats, .parallel = T)
-stats_20_0.1_1 <- ddply(hiRes_0.1_1, .(index), exceedence.stats, .parallel = T)
-stats_20_0.1_2 <- ddply(hiRes_0.1_2, .(index), exceedence.stats, .parallel = T)
-stats_20_0.1_3 <- ddply(hiRes_0.1_3, .(index), exceedence.stats, .parallel = T)
-stats_20_0.1_4 <- ddply(hiRes_0.1_4, .(index), exceedence.stats, .parallel = T)
-stats_20_0.1_5 <- ddply(hiRes_0.1_5, .(index), exceedence.stats, .parallel = T)
+stats_0.1_20 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, .parallel = T)
 
 ## Calculate exceedence stats BELOW a threshold
+# In situ
+stats_inSitu_19 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 19, below = TRUE, .parallel = T)
+stats_inSitu_18 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 18, below = TRUE, .parallel = T)
+stats_inSitu_17 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 17, below = TRUE, .parallel = T)
+stats_inSitu_16 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 16, below = TRUE, .parallel = T)
+stats_inSitu_15 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 15, below = TRUE, .parallel = T)
+stats_inSitu_14 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 14, below = TRUE, .parallel = T)
+
 # Static 0.1C
-# Using 0.1 as it has more pixels
-stats_19_0.1_0 <- ddply(hiRes_0.1_0, .(index), exceedence.stats, threshold = 19, below = TRUE, .parallel = T)
-stats_18_0.1_0 <- ddply(hiRes_0.1_0, .(index), exceedence.stats, threshold = 18, below = TRUE, .parallel = T)
-stats_17_0.1_0 <- ddply(hiRes_0.1_0, .(index), exceedence.stats, threshold = 17, below = TRUE, .parallel = T)
-stats_16_0.1_0 <- ddply(hiRes_0.1_0, .(index), exceedence.stats, threshold = 16, below = TRUE, .parallel = T)
-stats_15_0.1_0 <- ddply(hiRes_0.1_0, .(index), exceedence.stats, threshold = 15, below = TRUE, .parallel = T)
-stats_14_0.1_0 <- ddply(hiRes_0.1_0, .(index), exceedence.stats, threshold = 14, below = TRUE, .parallel = T)
+stats_0.1_19 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 19, below = TRUE, .parallel = T)
+stats_0.1_18 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 18, below = TRUE, .parallel = T)
+stats_0.1_17 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 17, below = TRUE, .parallel = T)
+stats_0.1_16 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 16, below = TRUE, .parallel = T)
+stats_0.1_15 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 15, below = TRUE, .parallel = T)
+stats_0.1_14 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 14, below = TRUE, .parallel = T)
 

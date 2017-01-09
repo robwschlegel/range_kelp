@@ -25,14 +25,10 @@ source("func/colour.palettes.R")
 ## USED BY:
 #
 ## CREATES:
-# "graph/sa_plot_exceedence_dur_20_in situ_0.png"
-# "graph/sa_plot_exceedence_dur_20_0.1_0.png"
-# "graph/sa_plot_exceedence_dur_19_0.1_0.png"
-# "graph/sa_plot_exceedence_dur_18_0.1_0.png"
-# "graph/sa_plot_exceedence_dur_17_0.1_0.png"
-# "graph/sa_plot_exceedence_dur_16_0.1_0.png"
-# "graph/sa_plot_exceedence_dur_15_0.1_0.png"
-# "graph/sa_plot_exceedence_dur_14_0.1_0.png"
+# The naming convention is: 1_2_3_4_5.x
+# 1. The data used, 2. The statistic measured, 3. The decadal projection, 4. The thermal threshold, 5. The number of years of projection
+  # Note that the GIFs show all decades of projection so there is no 5th designation
+# "graph/exc_dur_inSitu_20_0.png"
 
 #############################################################################
 
@@ -40,7 +36,7 @@ source("func/colour.palettes.R")
 
 # Run this entire script to process the stats rather than saving so many data.frames
 # If one seeks different threshold calculations it is best to change the source script
-system.time(source("proc/kelp.exceedence.R")) ## ~60 seconds
+system.time(source("proc/kelp.exceedence.R")) ## ~230 seconds
 
 # Load mapping values
 source("~/SA_map/scaleBarFunc.R")
@@ -95,32 +91,29 @@ grid.dat <- function(df){
 }
 # test <- grid.dat(stats_20_inSitu_0)
 
-## Grid data
+## Grid data ABOVE a threshold
 # In situ
-grid_20_inSitu_0 <- grid.dat(stats_20_inSitu_0)
-grid_20_inSitu_1 <- grid.dat(stats_20_inSitu_1)
-grid_20_inSitu_2 <- grid.dat(stats_20_inSitu_2)
-grid_20_inSitu_3 <- grid.dat(stats_20_inSitu_3)
-grid_20_inSitu_4 <- grid.dat(stats_20_inSitu_4)
-grid_20_inSitu_5 <- grid.dat(stats_20_inSitu_5)
-grid_20_inSitu <- rbind(grid_20_inSitu_0, grid_20_inSitu_1, grid_20_inSitu_2, grid_20_inSitu_3, grid_20_inSitu_4, grid_20_inSitu_5)
+grid_inSitu_20 <- ddply(stats_inSitu_20, .(decade), grid.dat)
 
 # Static 0.1
-grid_20_0.1_0 <- grid.dat(stats_20_0.1_0)
-grid_20_0.1_1 <- grid.dat(stats_20_0.1_1)
-grid_20_0.1_2 <- grid.dat(stats_20_0.1_2)
-grid_20_0.1_3 <- grid.dat(stats_20_0.1_3)
-grid_20_0.1_4 <- grid.dat(stats_20_0.1_4)
-grid_20_0.1_5 <- grid.dat(stats_20_0.1_5)
-grid_20_0.1 <- rbind(grid_20_0.1_0, grid_20_0.1_1, grid_20_0.1_2, grid_20_0.1_3, grid_20_0.1_4, grid_20_0.1_5)
+grid_0.1_20 <- ddply(stats_0.1_20, .(decade), grid.dat)
 
 ## Grid data BELOW a threshold
-grid_19_0.1_0 <- grid.dat(stats_19_0.1_0)
-grid_18_0.1_0 <- grid.dat(stats_18_0.1_0)
-grid_17_0.1_0 <- grid.dat(stats_17_0.1_0)
-grid_16_0.1_0 <- grid.dat(stats_16_0.1_0)
-grid_15_0.1_0 <- grid.dat(stats_15_0.1_0)
-grid_14_0.1_0 <- grid.dat(stats_14_0.1_0)
+# In situ
+grid_inSitu_19 <- ddply(stats_inSitu_19, .(decade), grid.dat)
+grid_inSitu_18 <- ddply(stats_inSitu_18, .(decade), grid.dat)
+grid_inSitu_17 <- ddply(stats_inSitu_17, .(decade), grid.dat)
+grid_inSitu_16 <- ddply(stats_inSitu_16, .(decade), grid.dat)
+grid_inSitu_15 <- ddply(stats_inSitu_15, .(decade), grid.dat)
+grid_inSitu_14 <- ddply(stats_inSitu_14, .(decade), grid.dat)
+
+# Static 0.1
+grid_0.1_19 <- ddply(stats_0.1_19, .(decade), grid.dat)
+grid_0.1_18 <- ddply(stats_0.1_18, .(decade), grid.dat)
+grid_0.1_17 <- ddply(stats_0.1_17, .(decade), grid.dat)
+grid_0.1_16 <- ddply(stats_0.1_16, .(decade), grid.dat)
+grid_0.1_15 <- ddply(stats_0.1_15, .(decade), grid.dat)
+grid_0.1_14 <- ddply(stats_0.1_14, .(decade), grid.dat)
 
 
 # 4. Create exceedence figures -------------------------------------------------------
@@ -136,9 +129,9 @@ site_names2[4,2] <- "Port\nElizabeth" # South Coast
 site_names3 <- site_names[8:12,] # South Coast
 
 ## Testing ##
-df = grid_20_inSitu
-decade = 2
-stat = 10
+# df = grid_inSitu_20
+# decade = 2
+# stat = 10
 ## END ##
 # Use numerical values to select the stat you want to project
 # 9 = "duration", 10 = "int_max", 11 = "int_cum", 12 = "int_max_abs", 13 = "int_cum_abs" 
@@ -159,7 +152,10 @@ draw.exc.fig <- function(df, decade, stat){
     excDataGrid$bins[excDataGrid$Z == 0] <- levels(excDataGrid$bins)[1]
     excDataGrid$bins[excDataGrid$Z == 366] <- levels(excDataGrid$bins)[7]
   } else {
-    breaks <- c(round_any(seq(0, max(df2$Z, na.rm = T), length.out = 7), 0.1), max(df2$Z, na.rm = T)+0.1)
+    breaks <- c(0, round_any(seq(min(df2$Z, na.rm = T), max(df2$Z, na.rm = T), length.out = 6), 0.1), max(df2$Z, na.rm = T)+0.1)
+    if(breaks[1] == breaks[2]){
+      breaks[2] <- breaks[2]+0.1
+    }
     excDataGrid$bins <- cut(excDataGrid$Z, breaks = breaks)
     levels(excDataGrid$bins)[c(1)] <- "(0]"
     levels(excDataGrid$bins)[c(7)] <- paste("(>",round_any(max(df2$Z, na.rm = T), 0.1),"]", sep = "")
@@ -168,9 +164,6 @@ draw.exc.fig <- function(df, decade, stat){
   }
   # Subsetted data frames for ease of plotting
   excDataGrid_complete <- excDataGrid[complete.cases(excDataGrid$bins),]
-  # excDataGrid_within <- excDataGrid[excDataGrid$exceede == "within",]
-  # excDataGrid_NA <- droplevels(excDataGrid[is.na(excDataGrid$Z) & excDataGrid$exceede != "NA",])
-  # excDataGrid_NA$exceede <- as.factor(excDataGrid_NA$exceede)
   # Create title data
   if(df2$trend[1] == "in situ"){
     subtitle <- paste("Projections based on decadal in situ trends", sep = "")
@@ -219,87 +212,173 @@ draw.exc.fig <- function(df, decade, stat){
   print(sa_plot_exc)
 }
 
-## Exceedence above thresholds
+## Exceedence ABOVE thresholds
 # In situ figures
-draw.exc.fig(grid_20_inSitu, 0, 9)
-ggsave("graph/sa_plot_exceedence_dur_20_inSitu_0.png",  height = 6, width = 10)
+draw.exc.fig(grid_inSitu_20, 0, 9)
+ggsave("graph/exc_dur_inSitu_20_0.png",  height = 6, width = 10)
 
 # Static 0.1C figures
-draw.exc.fig(grid_20_0.1, 0, 9)
-ggsave("graph/sa_plot_exceedence_dur_20_0.1_0.png",  height = 6, width = 10)
+draw.exc.fig(grid_0.1_20, 0, 9)
+ggsave("graph/exc_dur_0.1_20_0.png",  height = 6, width = 10)
 
-## Exceedence below thresholds
+## Exceedence BELOW thresholds
 # Static 0.1C figures
-draw.exc.fig(grid_19_0.1_0, 0, 9)
-ggsave("graph/sa_plot_exceedence_dur_19_0.1_0.png",  height = 6, width = 10)
-draw.exc.fig(grid_18_0.1_0, 0, 9)
-ggsave("graph/sa_plot_exceedence_dur_18_0.1_0.png",  height = 6, width = 10)
-draw.exc.fig(grid_17_0.1_0, 0, 9)
-ggsave("graph/sa_plot_exceedence_dur_17_0.1_0.png",  height = 6, width = 10)
-draw.exc.fig(grid_16_0.1_0, 0, 9)
-ggsave("graph/sa_plot_exceedence_dur_16_0.1_0.png",  height = 6, width = 10)
-draw.exc.fig(grid_15_0.1_0, 0, 9)
-ggsave("graph/sa_plot_exceedence_dur_15_0.1_0.png",  height = 6, width = 10)
-draw.exc.fig(grid_14_0.1_0, 0, 9)
-ggsave("graph/sa_plot_exceedence_dur_14_0.1_0.png",  height = 6, width = 10)
+draw.exc.fig(grid_0.1_19, 0, 9)
+ggsave("graph/exc_dur_0.1_19_0.png",  height = 6, width = 10)
+draw.exc.fig(grid_0.1_18, 0, 9)
+ggsave("graph/exc_dur_0.1_18_0.png",  height = 6, width = 10)
+draw.exc.fig(grid_0.1_17, 0, 9)
+ggsave("graph/exc_dur_0.1_17_0.png",  height = 6, width = 10)
+draw.exc.fig(grid_0.1_16, 0, 9)
+ggsave("graph/exc_dur_0.1_16_0.png",  height = 6, width = 10)
+draw.exc.fig(grid_0.1_15, 0, 9)
+ggsave("graph/exc_dur_0.1_15_0.png",  height = 6, width = 10)
+draw.exc.fig(grid_0.1_14, 0, 9)
+ggsave("graph/exc_dur_0.1_14_0.png",  height = 6, width = 10)
 
 
 # 5. Create all of the gifs -----------------------------------------------
 
+# It doesn't appear possible to set an output directory within saveGIF
+# So I am setting it here
+setwd("~/range_kelp/graph/")
+
+## Exceedence ABOVE thresholds
 ## inSitu
 # Duration
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(grid_20_inSitu, i, 9)
+    draw.exc.fig(grid_inSitu_20, i, 9)
   })
 }
-# Create gif for a single time series
-system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_inSitu_dur_20.gif")) ## ~9 seconds
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_inSitu_20.gif")) ## ~9 seconds
 # Int_max
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(grid_20_inSitu, i, 10)
+    draw.exc.fig(grid_inSitu_20, i, 10)
   })
 }
-# Create gif for a single time series
-system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_inSitu_intMax_20.gif")) ## xx seconds
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_intMax_inSitu_20.gif"))
 # Int_cum
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(grid_20_inSitu, i, 11)
+    draw.exc.fig(grid_inSitu_20, i, 11)
   })
 }
-# Create gif for a single time series
-system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_inSitu_intCum_20.gif")) ## xx seconds
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_intCum_inSitu_20.gif"))
 
 ## Static
 # Duration
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(grid_20_0.1, i, 9)
+    draw.exc.fig(grid_0.1_20, i, 9)
   })
 }
-# Create gif for a single time series
-system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_0.1_dur_20.gif")) ## xx seconds
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_0.1_20.gif"))
 # Int_max
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(grid_20_0.1, i, 10)
+    draw.exc.fig(grid_0.1_20, i, 10)
   })
 }
-# Create gif for a single time series
-system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_0.1_intMax_20.gif")) ## xx seconds
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_intMax_0.1_20.gif"))
 # Int_cum
 animate.exc.fig <- function() {
   lapply(seq(0,5), function(i) {
-    draw.exc.fig(grid_20_0.1, i, 11)
+    draw.exc.fig(grid_0.1_20, i, 11)
   })
 }
-# Create gif for a single time series
-system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_0.1_intCum_20.gif")) ## xx seconds
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_intCum_0.1_20.gif"))
 
 
 ### BELOW thresholds
 ## In situ
-# Duration
+# Duration 19
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_inSitu_19, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_inSitu_19.gif"))
+# Duration 18
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_inSitu_18, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_inSitu_18.gif"))
+# Duration 17
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_inSitu_17, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_inSitu_17.gif"))
+# Duration 16
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_inSitu_16, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_inSitu_16.gif"))
+# Duration 15
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_inSitu_15, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_inSitu_15.gif"))
+# Duration 14
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_inSitu_14, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_inSitu_14.gif"))
 
+## In situ
+# Duration 19
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_0.1_19, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_0.1_19.gif"))
+# Duration 18
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_0.1_18, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_0.1_18.gif"))
+# Duration 17
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_0.1_17, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_0.1_17.gif"))
+# Duration 16
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_0.1_16, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_0.1_16.gif"))
+# Duration 15
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_0.1_15, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_0.1_15.gif"))
+# Duration 14
+animate.exc.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exc.fig(grid_0.1_14, i, 9)
+  })
+}
+system.time(saveGIF(animate.exc.fig(), interval = 2, ani.width = 800, movie.name = "exc_dur_0.1_14.gif"))
+
+# CHange working directory back to project directory
+setwd("~/range_kelp/")
