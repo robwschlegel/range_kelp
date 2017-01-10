@@ -41,6 +41,10 @@ load("~/SA_map/africa_borders.Rdata")
 # Load site names
 load("~/SACTN/metadata/site_list_v4.1.Rdata")
 
+# Kelp presence
+load("data/kelp_presence_hiRes.Rdata")
+load("data/kelp_presence_grid.Rdata")
+
 
 # 2. Prep values for rasterising ------------------------------------------
 

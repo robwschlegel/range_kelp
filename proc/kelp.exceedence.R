@@ -23,7 +23,6 @@ source("func/proj.temp.R")
 
 # Clims
 load("data/daily_clim_hiRes.Rdata")
-daily_clim_hiRes <- cbind(index = 1:length(daily_clim_hiRes$lon), daily_clim_hiRes)
 
 
 # 2. Project daily clims given different trends ---------------------------
@@ -119,17 +118,11 @@ stats_0.1_20 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, .parallel =
 
 ## Calculate exceedence stats BELOW a threshold
 # In situ
-stats_inSitu_19 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 19, below = TRUE, .parallel = T)
-stats_inSitu_18 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 18, below = TRUE, .parallel = T)
-stats_inSitu_17 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 17, below = TRUE, .parallel = T)
 stats_inSitu_16 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 16, below = TRUE, .parallel = T)
 stats_inSitu_15 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 15, below = TRUE, .parallel = T)
 stats_inSitu_14 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 14, below = TRUE, .parallel = T)
 
 # Static 0.1C
-stats_0.1_19 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 19, below = TRUE, .parallel = T)
-stats_0.1_18 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 18, below = TRUE, .parallel = T)
-stats_0.1_17 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 17, below = TRUE, .parallel = T)
 stats_0.1_16 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 16, below = TRUE, .parallel = T)
 stats_0.1_15 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 15, below = TRUE, .parallel = T)
 stats_0.1_14 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 14, below = TRUE, .parallel = T)

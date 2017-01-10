@@ -22,16 +22,19 @@ source("func/proj.temp.R")
 
 # 1. Load data ------------------------------------------------------------
 
+# Site list
+load("~/SACTN/metadata/site_list_v4.1.Rdata")
+site_list_10y <- filter(site_list, length >= (365.25*10))
+site_list_10y <- filter(site_list_10y, index != "Hout Bay/ DEA")
+
 # Daily temperatures
 load("~/SACTNraw/data/SACTNdaily_v4.1.Rdata")
 
-# Site list
-load("~/SACTN/metadata/site_list_v4.1.Rdata")
+# Screen out time series under 10 years in length
+SACTNdaily_10y <- filter(SACTNdaily_v4.1, index %in% site_list_10y$index)
 
 # Hi-res coordinates
 outCoords <- read.table("~/tempssa_v3.0/coords_to_extract/interp_HiRes_coords_348_sites.txt", header = FALSE)
-# outCoords <- outCoords[,c(2,1)]
-# colnames(outCoords) <- c("lat", "lon")
 colnames(outCoords) <- c("lon", "lat")
 
 
@@ -93,8 +96,10 @@ daily.clim <- function(df){
 
 # Run it
 system.time(SACTNdaily_clim_v4.1 <- ddply(SACTNdaily_v4.1, .(index), daily.clim, .parallel = T)) # 40 seconds
+SACTNdaily_10y <- ddply(SACTNdaily_10y, .(index), daily.clim, .parallel = T)
 
-# Cast it wide and add lon/ lat
+## Cast it wide and add lon/ lat
+# ALL data
 SACTNdaily_clim_wide_v4.1 <- dcast(SACTNdaily_clim_v4.1, index ~ doy, value.var = "daily_clim")
 SACTNdaily_clim_wide_v4.1 %<>%
   group_by(index) %>% 
@@ -103,34 +108,66 @@ SACTNdaily_clim_wide_v4.1 %<>%
 SACTNdaily_clim_wide_v4.1 <- SACTNdaily_clim_wide_v4.1[c(1,368,369,2:367)]
 SACTNdaily_clim_wide_v4.1 <- SACTNdaily_clim_wide_v4.1[complete.cases(SACTNdaily_clim_wide_v4.1),]
 SACTNdaily_clim_wide_v4.1 <- data.frame(SACTNdaily_clim_wide_v4.1)
+colnames(SACTNdaily_clim_wide_v4.1) <- c("index", "lon", "lat", 1:366)
+# 10 year time series only
+SACTNdaily_clim_wide_10y <- dcast(SACTNdaily_10y, index ~ doy, value.var = "daily_clim")
+SACTNdaily_clim_wide_10y %<>%
+  group_by(index) %>% 
+  mutate(lon = site_list$lon[site_list_10y$index == index][1]) %>%
+  mutate(lat = site_list$lat[site_list_10y$index == index][1])
+SACTNdaily_clim_wide_10y <- SACTNdaily_clim_wide_10y[c(1,368,369,2:367)]
+SACTNdaily_clim_wide_10y <- SACTNdaily_clim_wide_10y[complete.cases(SACTNdaily_clim_wide_10y),]
+SACTNdaily_clim_wide_10y <- data.frame(SACTNdaily_clim_wide_10y)
+colnames(SACTNdaily_clim_wide_10y) <- c("index", "lon", "lat", 1:366)
+
+# Save it
+save(SACTNdaily_clim_wide_v4.1, file = "data/SACTNdaily_clim_wide_v4.1.Rdata")
+save(SACTNdaily_clim_wide_10y, file = "data/SACTNdaily_clim_wide_10y.Rdata")
+
 
 # 3. Interpolate at HiRes -------------------------------------------------
 
 # Initial interpolation
-daily_clim_hiRes <- array(0, dim = c(length(outCoords$lon), (length(SACTNdaily_clim_wide_v4.1)-3))) # Premake array for following function
+daily_clim_hiRes <- array(0, dim = c(length(outCoords$lon), (length(SACTNdaily_clim_wide_10y)-3))) # Premake array for following function
 for(i in 1:366) {
   daily_clim_hiRes[, i] <- (interpp(x = SACTNdaily_clim_wide_v4.1[, "lon"], y = SACTNdaily_clim_wide_v4.1[, "lat"], SACTNdaily_clim_wide_v4.1[[i+3]],
                       xo = outCoords$lon, yo = outCoords$lat, linear = TRUE, 
                       extrap = FALSE, dupl = "mean"))$z
 }
 # Additional manual linear interpolation in gaps on the east coast
-  # Not filling in gaps on west and south coast as these gaps exist due to intense spatial differences in real temperatures
-# daily_clim_hiRes[2,] <- daily_clim_hiRes[3,]+(daily_clim_hiRes[3,]-daily_clim_hiRes[4,])
-# daily_clim_hiRes[1,] <- daily_clim_hiRes[2,]+(daily_clim_hiRes[2,]-daily_clim_hiRes[3,])
+  # Great care was taken when interpolating temperatures on the west coast to ensure fidelity to the sharp temperature gradients
+# The first couple of missing pixels caused by interpolation function
+daily_clim_hiRes[2,] <- daily_clim_hiRes[3,]+(daily_clim_hiRes[3,]-daily_clim_hiRes[4,])
+daily_clim_hiRes[1,] <- daily_clim_hiRes[2,]+(daily_clim_hiRes[2,]-daily_clim_hiRes[3,])
+# Missing pixels between Cape Columbine and Saldanha bay
+daily_clim_hiRes[62,] <- daily_clim_hiRes[61,]+(daily_clim_hiRes[61,]-daily_clim_hiRes[60,])
+daily_clim_hiRes[63,] <- daily_clim_hiRes[62,]+(daily_clim_hiRes[62,]-daily_clim_hiRes[61,])
+# daily_clim_hiRes[64,] <- daily_clim_hiRes[63,]+(daily_clim_hiRes[63,]-daily_clim_hiRes[62,]) # Left blank
+daily_clim_hiRes[65,] <- daily_clim_hiRes[66,]-(daily_clim_hiRes[67,]-daily_clim_hiRes[66,])
+# Missing pixels at Cape Point
+daily_clim_hiRes[87,] <- daily_clim_hiRes[86,]+(daily_clim_hiRes[86,]-daily_clim_hiRes[85,])
+daily_clim_hiRes[88,] <- daily_clim_hiRes[87,]+(daily_clim_hiRes[87,]-daily_clim_hiRes[86,])
+daily_clim_hiRes[89,] <- daily_clim_hiRes[88,]+(daily_clim_hiRes[88,]-daily_clim_hiRes[87,])
+# Mssing pixels around Hermanus
+daily_clim_hiRes[116:117,] <- apply(daily_clim_hiRes[c(115,118),], 2, function(x){(seq(x[1], x[2], length.out = 4))[2:3]})
+# Random missing pixel
 daily_clim_hiRes[278,] <- (daily_clim_hiRes[277,] + daily_clim_hiRes[279,])/2
+# Stretch between Richards Bay and Sodwana
 daily_clim_hiRes[329:340,] <- apply(daily_clim_hiRes[c(328,341),], 2, function(x){(seq(x[1], x[2], length.out = 14))[2:13]})
 # daily_clim_hiRes[348,] <- daily_clim_hiRes[347,]+(daily_clim_hiRes[347,]-daily_clim_hiRes[346,]) # This last dot is mostly over land
 
 # Add additional bits and save
 daily_clim_hiRes <- data.frame(lon = outCoords$lon, lat = outCoords$lat, daily_clim_hiRes)
+daily_clim_hiRes <- daily_clim_hiRes[-348,] # This last dot is mostly over land
 colnames(daily_clim_hiRes) <- c("lon","lat", 1:366)
+daily_clim_hiRes <- cbind(index = 1:length(daily_clim_hiRes$lon), daily_clim_hiRes)
 save(daily_clim_hiRes, file = "data/daily_clim_hiRes.Rdata")
 
 # 4. Create climate projections -------------------------------------------
 
 # Calculate real climate trends from 25+ year time series
 sites_trend <- data.frame(index = site_list$index[(site_list$length/365.25)>25], temp = 0)
-sites_trend <- ddply(sites_trend, .(index), proj.temp, "real", 1, .parallel = T)
+sites_trend <- ddply(sites_trend, .(index), proj.temp, "in situ", 1, .parallel = T)
 sites_trend %<>%
   group_by(index) %>% 
   mutate(lon = site_list$lon[site_list$index == index][1]) %>%
