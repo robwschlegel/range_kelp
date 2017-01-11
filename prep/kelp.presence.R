@@ -56,7 +56,8 @@ kelp_presence_hiRes <- as.data.frame(interpp(x = site_list[, "lon"], y = site_li
 colnames(kelp_presence_hiRes) <- c("lon", "lat", "presence")
 kelp_presence_hiRes$presence <- round(kelp_presence_hiRes$presence)
 kelp_presence_hiRes$presence[c(1,62:64,87:89,117)] <- 1
-kelp_presence_hiRes$presence[c(65,125:137,278,329:340)] <- 0
+kelp_presence_hiRes$presence[c(65,129:137,278,329:340)] <- 0
+kelp_presence_hiRes <- kelp_presence_hiRes[-348,]
 
 # Save it
 save(kelp_presence_hiRes, file = "data/kelp_presence_hiRes.Rdata")
