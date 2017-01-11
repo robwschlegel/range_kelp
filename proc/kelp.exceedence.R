@@ -43,10 +43,11 @@ for(i in 0:5){
   hiRes_0.1 <- rbind(hiRes_0.1, dat)
 }
 
-# test <- filter(hiRes_inSitu, index == 130)
+# test <- filter(hiRes_inSitu, index == 89)
 # test <- melt(test[,c(4:369,371)], id.vars = "decade", variable.name = "doy", value.name = "temp")
 # ggplot(data = test, aes(x = doy, y = temp, group = decade)) +
 #   geom_line(aes(colour = decade))
+# nrow(test[test$temp<=15 & test$decade == 5,])
 
 # 3. Calculate threshold exceedence stats  --------------------------------
 
@@ -61,8 +62,8 @@ guide <- data.frame(index = NA, lon = NA, lat = NA,
   exceede = "NA", duration = NA, int_max = NA, # exceede = "NA" is intentional
   int_cum = NA, int_max_abs = NA, int_cum_abs = NA)
 # Define function for use
-# dat <- hiRes_0.1_0[250,] # Testing...
-# threshold = 16
+# dat <- hiRes_0.1[hiRes_0.1$index == 89 & hiRes_0.1$decade == 5,] # Testing...
+# threshold = 15
 # below = TRUE
 exceedence.stats <- function(dat, threshold = 20, below = FALSE){
   ts <- melt(dat[,4:369], id.vars = NULL, variable.name = "doy", value.name = "temp")
@@ -97,12 +98,21 @@ exceedence.stats <- function(dat, threshold = 20, below = FALSE){
     exceedences$lon <- dat$lon[1]
     exceedences$lat <- dat$lat[1]
     exceedences <- data.frame(exceedences)
-    exceedences_stats <- ddply(exceedences, .(index, lon, lat, exceede), summarise,
-                               duration = mean(duration, na.rm = T),
-                               int_max = mean(int_max, na.rm = T),
-                               int_cum = mean(int_cum, na.rm = T),
-                               int_max_abs = mean(int_max_abs, na.rm = T),
-                               int_cum_abs = mean(int_cum_abs, na.rm = T))
+    if(!below){
+      exceedences_stats <- ddply(exceedences, .(index, lon, lat, exceede), summarise,
+                                 duration = sum(duration, na.rm = T),
+                                 int_max = max(int_max, na.rm = T),
+                                 int_cum = sum(int_cum, na.rm = T),
+                                 int_max_abs = max(int_max_abs, na.rm = T),
+                                 int_cum_abs = mean(int_cum_abs, na.rm = T))
+    } else if (below){
+      exceedences_stats <- ddply(exceedences, .(index, lon, lat, exceede), summarise,
+                                 duration = sum(duration, na.rm = T),
+                                 int_max = min(int_max, na.rm = T),
+                                 int_cum = sum(int_cum, na.rm = T),
+                                 int_max_abs = min(int_max_abs, na.rm = T),
+                                 int_cum_abs = mean(int_cum_abs, na.rm = T))
+    }
     exceedences_stats <- data.frame(exceedences_stats)
   }
   exceedences_stats$trend <- dat$trend[1]
@@ -136,4 +146,4 @@ stats_0.1_15 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold =
 stats_0.1_14 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 14, below = TRUE, .parallel = T)
 
 # Check results
-# test <- filter(stats_inSitu_20, index == 129)
+test <- filter(stats_0.1_15, index == 89)

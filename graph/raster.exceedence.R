@@ -5,6 +5,7 @@
 # 2. Prep values for rasterising
 # 3. Create rasters
 # 4. Create threshold exceedence figures and GIFs
+# 5. Create de Hoop figures and GIFs
 ## DEPENDS ON:
 library(sp)
 library(raster)
@@ -124,7 +125,7 @@ grid_0.1_15 <- ddply(stats_0.1_15, .(decade), grid.dat)
 grid_0.1_14 <- ddply(stats_0.1_14, .(decade), grid.dat)
 
 # Check results
-test <- filter(grid_inSitu_20, index == 128, POS == 1)
+# test <- filter(grid_inSitu_20, index == 89, POS == 1)
 
 # 4. Create threshold exceedence figures and GIFs -------------------------
 
@@ -246,3 +247,101 @@ system.time(saveGIF(animate.thresh.fig(), interval = 2, ani.width = 800, movie.n
 
 setwd("~/range_kelp/")
 
+
+# 5. Create de Hoop figures and GIFs --------------------------------------
+# The De Hoop figure requires enough fine tuning so as to warrant its own creation function
+
+# Define the West Coast
+wc_lats <- c(-36, -33); wc_lons <- c(16, 22)
+
+# Define colours
+scale_cols <- c("skyblue", "peru")
+
+## Testing ##
+# df = grid_0.1_a
+# thresh = 21
+## END ##
+draw.thresh.fig <- function(df, thresh){
+  if(df$below[1] == TRUE) side = "below"
+  if(df$below[1] == "FALSE") side = "above"
+  df2 <- df[,c(1:9,14:17)] # Use this data frame for max value for breaks
+  excDataGrid <- df2[df2$thresh == thresh,]
+  colnames(excDataGrid)[9] <- "Z"
+  # Breaks for plotting
+  breaks <- c(0, round(seq(1, 365, length.out = 6)), 366)
+  excDataGrid$bins <- cut(excDataGrid$Z, breaks = breaks)
+  levels(excDataGrid$bins)[c(1,7)] <- c("(0]", "(366]")
+  excDataGrid$bins[excDataGrid$Z == 0] <- levels(excDataGrid$bins)[1]
+  excDataGrid$bins[excDataGrid$Z == 366] <- levels(excDataGrid$bins)[7]
+  # Subsetted data frames for ease of plotting
+  excDataGrid_complete <- excDataGrid[complete.cases(excDataGrid$bins),]
+  thresh_dat <- round(excDataGrid_complete$Z[excDataGrid_complete$index == 129 & excDataGrid_complete$POS == 1])
+  # excDataGrid_complete$bins <- ordered(excDataGrid_complete$bins)
+  breaks2 <- levels(excDataGrid$bins)
+  # Crerate the raster figure
+  sa_plot_thresh <- ggplot() + bw_update +
+    # Map shapes
+    geom_polygon(data = sa_shore, aes(x = X, y = Y, group = PID), show.legend = FALSE, fill = "grey60") +
+    geom_path(data = sa_provinces_new, aes(x = lon, y = lat, group = group), size = 0.5, colour = "grey40") +
+    geom_path(data = africa_borders, aes(x = lon, y = lat, group = group), size = 1.0, colour = "black") +
+    # De Hoop!
+    geom_point(aes(x = 20.4055089, y = -34.4730239), fill = "black", size = 8, shape = 23, alpha = 0.5) +
+    geom_text(aes(x = 20.4055089, y = -34.4730239, label = paste("De Hoop = ", thresh_dat, sep = "")), 
+              hjust = 0.4, vjust = -1.6, size = 6, colour = "black", angle = 45, lineheight = 0.8) +
+    # Site labels
+    geom_text(data = site_names1[2,], aes(lon, lat, label = site), hjust = 1.15, vjust = 1.5, size = 5, colour = "white") +
+    geom_text(aes(x = 18.9, y = -34.6, label = "False\nBay"), hjust = 1.15, vjust = 0.5, size = 5, colour = "white", lineheight = 0.8) +
+    geom_text(data = site_names2, aes(lon, lat, label = site), hjust = -0.0, vjust = 1.4, size = 5, colour = "white", lineheight = 0.8) +
+    # Threshold info
+    geom_polygon(data = excDataGrid_complete, aes(x = X, y = Y, group = paste(excDataGrid_complete$PID, excDataGrid_complete$SID,
+                                                                              sep = "_"), fill = bins), colour = NA, size = 0.1) +
+    # Kelp presence absence boxes
+    geom_polygon(data = present, aes(x = X, y = Y, group = paste(present$SID, present$PID, sep = "_")),
+                 show.legend = FALSE, fill = NA, colour = "white", size = 0.3) +
+    geom_polygon(data = absent, aes(x = X, y = Y, group = paste(absent$SID, absent$PID, sep = "_")),
+                 show.legend = FALSE, fill = NA, colour = "black", size = 0.3) +
+    
+    # Colour and title info
+    scale_fill_viridis(discrete = TRUE, drop = FALSE) +
+    guides(fill = guide_legend(paste("Days\n",side," ",thresh,"°C", sep = ""))) +
+    ggtitle("Exceedence") +
+    # additional minutia
+    scale_y_continuous(breaks = seq(-35,-34,1)) +
+    scale_x_continuous(breaks = seq(18,20,2)) +
+    scaleBar(lon = 16.5, lat = -35.7, distanceLon = 100, distanceLat = 10, distanceLegend = 20, dist.unit = "km",
+             arrow.length = 30, arrow.distance = 30, arrow.North.size = 4) +
+    coord_map(xlim = wc_lons, ylim = wc_lats, projection = "mercator") +
+    theme(plot.title = element_text(size = 10, hjust = 0.5),
+          plot.subtitle = element_text(size = 10, hjust = 0.5),
+          axis.title = element_blank(),
+          panel.background = element_rect(fill = "grey30"),
+          legend.justification = c(1,0), legend.position = c(0.7, 0.7),
+          legend.background = element_rect(fill = "white", colour = "black"),
+          legend.title = element_text(size = 10),
+          legend.text = element_text(size = 10),
+          legend.direction = "vertical",
+          legend.box = "horizontal")
+  print(sa_plot_thresh)
+}
+
+# draw.thresh.fig(grid_0.1_a, 20)
+
+setwd("~/range_kelp/graph/")
+
+## Exceedence ABOVE thresholds
+animate.thresh.fig <- function() {
+  lapply(seq(20,22), function(i) {
+    draw.thresh.fig(grid_inSitu_a, i)
+  })
+}
+system.time(saveGIF(animate.thresh.fig(), interval = 2, ani.width = 800, movie.name = "thresh_dur_inSitu_a_deHoop.gif")) ## ~4 seconds
+
+## Exceedence BELOW thresholds
+animate.thresh.fig <- function() {
+  lapply(rev(seq(14,16)), function(i) {
+    draw.thresh.fig(grid_inSitu_b, i)
+  })
+}
+system.time(saveGIF(animate.thresh.fig(), interval = 2, ani.width = 800, movie.name = "thresh_dur_inSitu_b_deHoop.gif")) ## ~4 seconds
+
+setwd("~/range_kelp/")

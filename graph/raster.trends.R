@@ -4,6 +4,7 @@
 # 1. Load data
 # 2. Prep data for plotting
 # 3. Create trend figures and GIFs
+# 4. Create de Hoop figures and GIFs 
 ## DEPENDS ON:
 library(plyr)
 library(dplyr)
@@ -103,11 +104,15 @@ grid.dat <- function(df){
 grid_trend_all <- ddply(trend_all , .(type), grid.dat)
 grid_trend_all$trend <- as.factor(round_any(grid_trend_all$trend, 0.1))
 
+
 # 3. Create trend figures and GIFs --------------------------------------
 
+scale_cols <- c("slateblue4", "slateblue4", "royalblue2", "royalblue2", "steelblue1", "steelblue1", 
+                "white", "pink1", "pink1", "salmon", "salmon")
+
 ## Testing ##
-df = grid_trend_all
-type = 2
+# df = grid_trend_all
+# type = 2
 ## END ##
 draw.trend.fig <- function(type){
   df <- grid_trend_all
@@ -123,9 +128,6 @@ draw.trend.fig <- function(type){
   }
   # Define colour scale breaks
   breaks <- levels(df$trend)[c(2,4,6,7,8,10)]
-  # labels <- seq(-0.7, 0.5, 0.2)
-  scale_cols <- c("slateblue4", "slateblue4", "royalblue2", "royalblue2", "steelblue1", "steelblue1", 
-                  "white", "pink1", "pink1", "salmon", "salmon")
   # Create figure
   sa_plot_trend <- ggplot() + bw_update +
     geom_polygon(data = sa_shore, aes(x = X, y = Y, group = PID), show.legend = FALSE, fill = "grey60") +
@@ -179,6 +181,93 @@ animate.trend.fig <- function() {
   })
 }
 saveGIF(animate.trend.fig(), interval = c(5,2), ani.width = 800, movie.name = "trend_all.gif")
+
+setwd("~/range_kelp/")
+
+
+# 4. Create de Hoop figures and GIFs --------------------------------------
+# The De Hoop figure requires enough fine tuning so as to warrant its own creation function
+
+# Define the West Coast
+wc_lats <- c(-36, -33); wc_lons <- c(16, 22)
+
+## Testing ##
+# df = grid_trend_all
+# type = 2
+## END ##
+draw.trend.fig <- function(type){
+  df <- grid_trend_all
+  # Subset by type
+  df2 <- df[as.numeric(df$type) == type,]
+  # legend data
+  if(df2$type[1] == "in situ"){
+    subtitle <- "In situ"
+    site_list_25y <- site_list[(site_list$length/365.25)>25,]
+  } else if(df2$type[1] == "0.1"){
+    subtitle <- "0.1°C/dec"
+    site_list_25y <- data.frame(lon = 100, lat = -60) # A throw away point...
+  }
+  trend_dat <- droplevels(df2$trend[df2$PID == 64 & df2$SID == 15 & df2$POS == 1])
+  # Define colour scale breaks
+  breaks <- levels(df$trend)[c(2,4,6,7,8,10)]
+  # Crerate the raster figure
+  sa_plot_trend <- ggplot() + bw_update +
+    # Map shapes
+    geom_polygon(data = sa_shore, aes(x = X, y = Y, group = PID), show.legend = FALSE, fill = "grey60") +
+    geom_path(data = sa_provinces_new, aes(x = lon, y = lat, group = group), size = 0.5, colour = "grey40") +
+    geom_path(data = africa_borders, aes(x = lon, y = lat, group = group), size = 1.0, colour = "black") +
+    # De Hoop!
+    geom_point(aes(x = 20.4055089, y = -34.4730239), fill = "black", size = 8, shape = 23, alpha = 0.5) +
+    geom_text(aes(x = 20.4055089, y = -34.4730239, label = paste("De Hoop = ", trend_dat, sep = "")), 
+              hjust = 0.4, vjust = -1.6, size = 6, colour = "black", angle = 45, lineheight = 0.8) +
+    # Site labels
+    geom_text(data = site_names1[2,], aes(lon, lat, label = site), hjust = 1.15, vjust = 1.5, size = 5, colour = "white") +
+    geom_text(aes(x = 18.9, y = -34.6, label = "False\nBay"), hjust = 1.15, vjust = 0.5, size = 5, colour = "white", lineheight = 0.8) +
+    geom_text(data = site_names2, aes(lon, lat, label = site), hjust = -0.0, vjust = 1.4, size = 5, colour = "white", lineheight = 0.8) +
+    # Trend data
+    geom_polygon(data = df2, aes(x = X, y = Y, group = paste(df2$PID, df2$SID, sep = "_"), fill = trend), 
+                 colour = NA, size = 0.1) +
+    # Trend label
+    geom_label(aes(x = 24.25, y = -29, label = subtitle)) +
+    # Kelp presence absence boxes
+    geom_polygon(data = present, aes(x = X, y = Y, group = paste(present$SID, present$PID, sep = "_")),
+                 show.legend = FALSE, fill = NA, colour = "white", size = 0.3) +
+    geom_polygon(data = absent, aes(x = X, y = Y, group = paste(absent$SID, absent$PID, sep = "_")),
+                 show.legend = FALSE, fill = NA, colour = "black", size = 0.3) +
+    # 53 in situ time series used for interpolation
+    geom_point(data = site_list_25y, aes(x = lon, y = lat), fill = "black", size = 8, shape = 25, alpha = 0.3) +
+    # Colour and title info
+    scale_fill_manual(breaks = rev(breaks), labels = rev(breaks), values = scale_cols, drop = FALSE) +
+    guides(fill = guide_legend("Decadal\ntrend (°C)")) +
+    ggtitle("Trends") +
+    # additional minutia
+    scale_y_continuous(breaks = seq(-35,-34,1)) +
+    scale_x_continuous(breaks = seq(18,20,2)) +
+    scaleBar(lon = 16.5, lat = -35.7, distanceLon = 100, distanceLat = 10, distanceLegend = 20, dist.unit = "km",
+             arrow.length = 30, arrow.distance = 30, arrow.North.size = 4) +
+    coord_map(xlim = wc_lons, ylim = wc_lats, projection = "mercator") +
+    theme(plot.title = element_text(size = 10, hjust = 0.5),
+          plot.subtitle = element_text(size = 10, hjust = 0.5),
+          axis.title = element_blank(),
+          panel.background = element_rect(fill = "grey30"),
+          legend.justification = c(1,0), legend.position = c(0.7, 0.7),
+          legend.background = element_rect(fill = "white", colour = "black"),
+          legend.title = element_text(size = 10),
+          legend.text = element_text(size = 10),
+          legend.direction = "vertical",
+          legend.box = "horizontal")
+  print(sa_plot_trend)
+}
+draw.trend.fig(1)
+
+setwd("~/range_kelp/graph/")
+
+animate.trend.fig <- function() {
+  lapply(seq(1,2), function(i) {
+    draw.trend.fig(i)
+  })
+}
+saveGIF(animate.trend.fig(), interval = c(5,2), ani.width = 800, movie.name = "trend_all_deHoop.gif")
 
 setwd("~/range_kelp/")
 

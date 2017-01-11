@@ -98,7 +98,6 @@ draw.daily.fig <- function(day_select){
     geom_polygon(data = sa_shore, aes(x = X, y = Y, group = PID), show.legend = FALSE, fill = "grey60") +
     geom_path(data = sa_provinces_new, aes(x = lon, y = lat, group = group), size = 0.5, colour = "grey40") +
     geom_path(data = africa_borders, aes(x = lon, y = lat, group = group), size = 1.0, colour = "black") +
-    geom_text(data = site_names1, aes(lon, lat, label = site), hjust = 1.15, vjust = 0.5, size = 3, colour = "white") +
     geom_text(data = site_names2, aes(lon, lat, label = site), hjust = -0.15, vjust = 0.8, size = 3, colour = "white", 
               angle = 330, lineheight = 0.8) +
     geom_text(data = site_names3, aes(lon, lat, label = site), hjust = -0.15, vjust = 0.5, size = 3, colour = "white") +
@@ -123,15 +122,18 @@ draw.daily.fig <- function(day_select){
     geom_point(aes(x = y_point-0.05, y = -26.64), colour = "red", size = 6) +
     geom_point(aes(x = y_point, y = -26.64), colour = "red", size = 6) +
     geom_point(aes(x = y_point+0.05, y = -26.64), colour = "red", size = 6) +
-    geom_text(aes(label = date_day, x = y_point, y = -26.62), size = 2) +
+    geom_text(aes(label = day_select, x = y_point, y = -26.62), size = 3) +
     # The bottom line and ball
     geom_line(aes(x = 22.5:25.5, y = -27.64)) +
     geom_segment(aes(x = d_point, xend = d_point, y = -27.54, yend = -27.79)) +
     geom_point(aes(x = d_point, y = -27.44), colour = "red", size = 5) +
-    geom_text(aes(label = date_day, x = d_point, y = -27.44), size = 2) +
+    geom_text(aes(label = date_day, x = d_point, y = -27.44), size = 3) +
     # The month label
     geom_text(aes(x = 24, y = -27.01, label = date_month), size = 5, alpha = label_alpha) +
     ## END progress bar  ##
+    # De Hoop box
+    geom_rect(aes(xmin = 16, xmax = 22, ymin = -33, ymax = -35.9), fill = NA, colour = "black") +
+    geom_text(data = site_names1, aes(lon, lat, label = site), hjust = 1.15, vjust = 0.5, size = 3, colour = "white") +
     # Colour scale and labels
     scale_fill_manual(values = cols27, drop = FALSE) +
     guides(fill = guide_legend(expression(paste("Temp. (",degree,"C)")))) +
@@ -156,7 +158,7 @@ draw.daily.fig <- function(day_select){
 }
 
 # Print one static day for fun
-draw.daily.fig(1)
+draw.daily.fig(130)
 ggsave("graph/daily_hiRes.png", height = 6, width = 10)
 
 # It doesn't appear possible to set an output directory within saveGIF

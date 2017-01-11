@@ -51,3 +51,11 @@ Projected range expansions of kelps in South Africa
 * Created animations for differing thresholds
 * Improved daily temperature animation progress bar
 * Investigated issues with existence calculations
+
+## 2016/01/12
+* Animated trend raster figure
+* Animated above and below threshold figures
+* Improved daily animation progress bar
+* Addressed existence issues
+* Improved De Hoop focus window
+* Created De Hoop version of all animations

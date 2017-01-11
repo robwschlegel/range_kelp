@@ -45,11 +45,13 @@ colnames(grid_inSitu_all)[8:11] <- c("thresh_21", "thresh_20", "thresh_16", "thr
 grid_0.1_all <- cbind(grid_0.1_21[,c(1:7,9)], grid_0.1_20[,9], grid_0.1_16[,9], grid_0.1_15[,c(9,14,15)])
 colnames(grid_0.1_all)[8:11] <- c("thresh_21", "thresh_20", "thresh_16", "thresh_15")
 
+# Check one decade
+test <- filter(grid_0.1_all, decade == 5, POS == 1)
+
 # Derive stats from the gridded data
 guide <- filter(grid_inSitu_all, decade == 0, POS == 1)
 limit_20 <- round(guide$thresh_20[guide$index == 129][1])
 limit_15 <- round(guide$thresh_15[guide$index == 115][1])
-
 
 # Calculate de Hoop and Gansbaai stats
 gansbaai <- melt(daily_clim_hiRes[115,4:369], id.vars = NULL, variable.name = "doy", value.name = "temp")
@@ -61,9 +63,7 @@ deHoop <- melt(daily_clim_hiRes[129,4:369], id.vars = NULL, variable.name = "doy
 # limit_16 <- nrow(filter(deHoop, temp <= 16))
 # limit_15 <- nrow(filter(deHoop, temp <= 15))
 
-
-
-# Testing
+# Exist-tential
 # dat <- grid_0.1_all[10,]
 # dat <- hiRes_0.1[66,]
 exist.test <- function(dat){
@@ -83,7 +83,7 @@ exist_grid_inSitu <- ddply(grid_inSitu_all, .(index, PID, SID, POS, X, Y, trend,
 exist_grid_0.1 <- ddply(grid_0.1_all, .(index, PID, SID, POS, X, Y, trend, decade), exist.test)
 
 # Check one decade
-test <- filter(exist_grid_0.1, decade == 0, POS == 1)
+# test <- filter(exist_grid_0.1, decade == 0, POS == 1)
 
 # 3. Create existence figures and GIFs ------------------------------------
 
@@ -134,7 +134,7 @@ draw.exist.fig <- function(df, decade){
     geom_line(aes(x = 21.5:26.5, y = -26.62)) +
     # END progress bar  #
     
-    scale_fill_manual(labels = c("yes", "no"), values = scale_cols) +#, labels = breaks2, breaks = breaks2) +
+    scale_fill_manual(labels = c("yes", "no"), values = scale_cols) +
     guides(fill = guide_legend("Threshold\nexceeded")) +
     ggtitle("Existence", subtitle = subtitle) +
     # ggtitle("Existence") + # Title for static images
@@ -194,7 +194,10 @@ setwd("~/range_kelp/")
   # The De Hoop figure requires enough fine tuning so as to warrant its own creation function
  
 # Define the West Coast
-wc_lats <- c(-36, -33); wc_lons <- c(17, 21)
+wc_lats <- c(-36, -33); wc_lons <- c(16, 22)
+
+# Define colours
+scale_cols <- c("skyblue", "peru")
 
 ## Testing ##
 # df = exist_grid_0.1
@@ -204,19 +207,29 @@ draw.exist.fig <- function(df, decade){
   df2 <- df[df$decade == decade,]
   yes <- df2[df2$exist == 1,]
   no <- df2[df2$exist == 0,]
+  # Create existence label
+  if(df2$exist[df2$index == 129 & df2$POS == 1] == 1){
+    exist = "yes"
+  } else {
+    exist = "no"
+  }
   # Create title data
   if(df$trend[1] == "in situ"){
     subtitle <- paste("Projections based on decadal in situ trends", sep = "")
   } else if(df$trend[1] == "0.1"){
     subtitle <- paste(paste("Projections based on 0.1°C/dec trends", sep = ""))
   }
-  p_point <- (decade*(2/6))+19.1
+  p_point <- round_any(((decade*(2/6))+19.1),0.1)
   # Crerate the raster figure
   sa_plot_exist <- ggplot() + bw_update +
     # Map shapes
     geom_polygon(data = sa_shore, aes(x = X, y = Y, group = PID), show.legend = FALSE, fill = "grey60") +
     geom_path(data = sa_provinces_new, aes(x = lon, y = lat, group = group), size = 0.5, colour = "grey40") +
     geom_path(data = africa_borders, aes(x = lon, y = lat, group = group), size = 1.0, colour = "black") +
+    # De Hoop!
+    geom_point(aes(x = 20.4055089, y = -34.4730239), fill = "black", size = 8, shape = 23, alpha = 0.5) +
+    geom_text(aes(x = 20.4055089, y = -34.4730239, label = paste("De Hoop = ", exist, sep = "")), 
+                  hjust = 0.4, vjust = -2, size = 6, colour = "black", angle = 45) +
     # Site labels
     geom_text(data = site_names1[2,], aes(lon, lat, label = site), hjust = 1.15, vjust = 1.5, size = 5, colour = "white") +
     geom_text(aes(x = 18.9, y = -34.6, label = "False\nBay"), hjust = 1.15, vjust = 0.5, size = 5, colour = "white", lineheight = 0.8) +
@@ -231,21 +244,18 @@ draw.exist.fig <- function(df, decade){
                  show.legend = FALSE, fill = NA, colour = "white", size = 0.3) +
     geom_polygon(data = absent, aes(x = X, y = Y, group = paste(absent$SID, absent$PID, sep = "_")),
                  show.legend = FALSE, fill = NA, colour = "black", size = 0.3) +
-    # De Hoop!
-    geom_point(aes(x = 20.4055089, y = -34.4730239), colour = "gold", size = 7, shape = 13, alpha = 0.7) +
-    geom_text(aes(x = 20.4055089, y = -34.4730239, label = "de Hoop"), hjust = 0.5, vjust = -0.7, size = 7, 
-              colour = "gold", angle = 45) +
-    # Manually create progress bar #
-    geom_rect(aes(xmin = 19.0, xmax = 21.0, ymin = -33.0, ymax = -33.25), fill = "white", colour = "black") +
+    ## Manually create progress bar ##
+    # The base box
+    geom_rect(aes(xmin = 19.0, xmax = 20.9, ymin = -33.0, ymax = -33.25), fill = "white", colour = "black") +
+    # The bar pieces
+    geom_line(aes(x = seq(19.1,20.8,0.1), y = -33.17)) +
     geom_segment(aes(x = p_point, xend = p_point, y = -33.21, yend = -33.14)) +
-    geom_point(aes(x = p_point, y = -33.10), colour = "red", size = 5, alpha = 0.7) +
+    geom_point(aes(x = p_point, y = -33.10), colour = "red", size = 5) +
     geom_text(aes(label = decade, x = p_point, y = -33.10), size = 4) +
-    geom_line(aes(x = seq(19.1,20.9,0.1), y = -33.17)) +
-    # END progress bar  #
-    scale_fill_discrete(labels = c("yes", "no")) +
+    ## END progress bar ##
+    scale_fill_manual(labels = c("yes", "no"), values = scale_cols) +
     guides(fill = guide_legend("Threshold\nexceeded")) +
     ggtitle("Existence", subtitle = subtitle) +
-    # ggtitle("Existence") + # Title for static images
     scale_y_continuous(breaks = seq(-35,-34,1)) +
     scale_x_continuous(breaks = seq(18,20,2)) +
     scaleBar(lon = 16.5, lat = -35.7, distanceLon = 100, distanceLat = 10, distanceLegend = 20, dist.unit = "km",
@@ -294,6 +304,6 @@ animate.exist.fig <- function() {
 }
 system.time(saveGIF(animate.exist.fig(), interval = 2, ani.width = 800, movie.name = "exist_0.1_deHoop.gif")) ## ~9 seconds
 
-# CHange working directory back to project directory
+# Change working directory back to project directory
 setwd("~/range_kelp/")
 

@@ -193,11 +193,7 @@ trend_hiRes[65,] <- trend_hiRes[66,]-(trend_hiRes[67,]-trend_hiRes[66,])
 # Missing pixels at Cape Point
 trend_hiRes[86,] <- (trend_hiRes[85,]+(trend_hiRes[84,]))/2
 trend_hiRes[87,] <- trend_hiRes[86,]+(trend_hiRes[86,]-trend_hiRes[85,])
-trend_hiRes[88:89,] <- trend_hiRes[87,]
-trend_hiRes[89,] <- trend_hiRes[88,]+(trend_hiRes[88,]-trend_hiRes[87,])
-trend_hiRes[92,] <- trend_hiRes[93,]-trend_hiRes[94,]
-trend_hiRes[91,] <- trend_hiRes[92,]-trend_hiRes[94,]
-trend_hiRes[90,] <- trend_hiRes[91,]-trend_hiRes[94,]
+trend_hiRes[88:92,] <- (seq(trend_hiRes[87,], trend_hiRes[93,], length.out = 7))[2:6]
 # Missing pixel at Hangklip
 trend_hiRes[101,] <- (trend_hiRes[100,] + trend_hiRes[102,])/2
 # Mssing pixels around Hermanus
