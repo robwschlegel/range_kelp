@@ -31,32 +31,36 @@ source("func/colour.palettes.R")
 
 # Run this entire script to process the stats rather than saving so many data.frames
 # If one seeks different threshold calculations it is best to change the source script
-system.time(source("graph/raster.exceedence.R")) ## ~xxx seconds
+system.time(source("graph/raster.exceedence.R")) ## ~280 seconds
 
 
 # 2. Calculate existence --------------------------------------------------
 
 ## Create composite grid data frames
 # In situ
-grid_inSitu_all <- cbind(grid_inSitu_20[,c(1:7,9)], grid_inSitu_16[,9], grid_inSitu_15[,c(9,14,15)])
-colnames(grid_inSitu_all)[8:10] <- c("thresh_20", "thresh_16", "thresh_15")
+grid_inSitu_all <- cbind(grid_inSitu_21[,c(1:7,9)], grid_inSitu_20[,9], grid_inSitu_16[,9], grid_inSitu_15[,c(9,14,15)])
+colnames(grid_inSitu_all)[8:11] <- c("thresh_21", "thresh_20", "thresh_16", "thresh_15")
 
 # Static 0.1C
-grid_0.1_all <- cbind(grid_0.1_20[,c(1:7,9)], grid_0.1_16[,9], grid_0.1_15[,c(9,14,15)])
-colnames(grid_0.1_all)[8:10] <- c("thresh_20", "thresh_16", "thresh_15")
+grid_0.1_all <- cbind(grid_0.1_21[,c(1:7,9)], grid_0.1_20[,9], grid_0.1_16[,9], grid_0.1_15[,c(9,14,15)])
+colnames(grid_0.1_all)[8:11] <- c("thresh_21", "thresh_20", "thresh_16", "thresh_15")
 
-# Check one decade
-test <- filter(grid_0.1_all, decade == 0)
+# Derive stats from the gridded data
+guide <- filter(grid_inSitu_all, decade == 0, POS == 1)
+limit_20 <- round(guide$thresh_20[guide$index == 129][1])
+limit_15 <- round(guide$thresh_15[guide$index == 115][1])
+
 
 # Calculate de Hoop and Gansbaai stats
 gansbaai <- melt(daily_clim_hiRes[115,4:369], id.vars = NULL, variable.name = "doy", value.name = "temp")
 # limit_20 <- nrow(filter(gansbaai, temp >= 20))
-limit_16 <- nrow(filter(gansbaai, temp <= 16))
-limit_15 <- nrow(filter(gansbaai, temp <= 15))
-deHoop <- melt(daily_clim_hiRes[128,4:369], id.vars = NULL, variable.name = "doy", value.name = "temp")
-limit_20 <- nrow(filter(deHoop, temp >= 20))
+# limit_16 <- nrow(filter(gansbaai, temp <= 16))
+# limit_15 <- nrow(filter(gansbaai, temp <= 15))
+deHoop <- melt(daily_clim_hiRes[129,4:369], id.vars = NULL, variable.name = "doy", value.name = "temp")
+# limit_20 <- nrow(filter(deHoop, temp >= 20))
 # limit_16 <- nrow(filter(deHoop, temp <= 16))
 # limit_15 <- nrow(filter(deHoop, temp <= 15))
+
 
 
 # Testing
@@ -79,9 +83,11 @@ exist_grid_inSitu <- ddply(grid_inSitu_all, .(index, PID, SID, POS, X, Y, trend,
 exist_grid_0.1 <- ddply(grid_0.1_all, .(index, PID, SID, POS, X, Y, trend, decade), exist.test)
 
 # Check one decade
-test <- filter(exist_grid_0.1, decade == 0)
+test <- filter(exist_grid_0.1, decade == 0, POS == 1)
 
 # 3. Create existence figures and GIFs ------------------------------------
+
+scale_cols <- c("skyblue", "peru")
 
 ## Testing ##
 # df = exist_grid_0.1
@@ -128,7 +134,7 @@ draw.exist.fig <- function(df, decade){
     geom_line(aes(x = 21.5:26.5, y = -26.62)) +
     # END progress bar  #
     
-    scale_fill_discrete(labels = c("yes", "no")) +#, labels = breaks2, breaks = breaks2) +
+    scale_fill_manual(labels = c("yes", "no"), values = scale_cols) +#, labels = breaks2, breaks = breaks2) +
     guides(fill = guide_legend("Threshold\nexceeded")) +
     ggtitle("Existence", subtitle = subtitle) +
     # ggtitle("Existence") + # Title for static images
@@ -172,7 +178,13 @@ animate.exist.fig <- function() {
   })
 }
 system.time(saveGIF(animate.exist.fig(), interval = 2, ani.width = 800, movie.name = "exist_inSitu.gif")) ## ~9 seconds
-# Int_max
+# Static 0.1C
+animate.exist.fig <- function() {
+  lapply(seq(0,5), function(i) {
+    draw.exist.fig(exist_grid_0.1, i)
+  })
+}
+saveGIF(animate.exist.fig(), interval = 2, ani.width = 800, movie.name = "exist_0.1.gif")
 
 # CHange working directory back to project directory
 setwd("~/range_kelp/")
@@ -223,9 +235,6 @@ draw.exist.fig <- function(df, decade){
     geom_point(aes(x = 20.4055089, y = -34.4730239), colour = "gold", size = 7, shape = 13, alpha = 0.7) +
     geom_text(aes(x = 20.4055089, y = -34.4730239, label = "de Hoop"), hjust = 0.5, vjust = -0.7, size = 7, 
               colour = "gold", angle = 45) +
-    
-    
-    
     # Manually create progress bar #
     geom_rect(aes(xmin = 19.0, xmax = 21.0, ymin = -33.0, ymax = -33.25), fill = "white", colour = "black") +
     geom_segment(aes(x = p_point, xend = p_point, y = -33.21, yend = -33.14)) +
@@ -233,10 +242,6 @@ draw.exist.fig <- function(df, decade){
     geom_text(aes(label = decade, x = p_point, y = -33.10), size = 4) +
     geom_line(aes(x = seq(19.1,20.9,0.1), y = -33.17)) +
     # END progress bar  #
-    
-    
-    
-    
     scale_fill_discrete(labels = c("yes", "no")) +
     guides(fill = guide_legend("Threshold\nexceeded")) +
     ggtitle("Existence", subtitle = subtitle) +
@@ -280,14 +285,14 @@ animate.exist.fig <- function() {
     draw.exist.fig(exist_grid_inSitu, i)
   })
 }
-system.time(saveGIF(animate.exist.fig(), interval = 2, ani.width = 1000, movie.name = "exist_inSitu_deHoop.gif")) ## ~9 seconds
+system.time(saveGIF(animate.exist.fig(), interval = 2, ani.width = 800, movie.name = "exist_inSitu_deHoop.gif")) ## ~9 seconds
 # Static 0.1C
 animate.exist.fig <- function() {
   lapply(seq(0,5), function(i) {
     draw.exist.fig(exist_grid_0.1, i)
   })
 }
-system.time(saveGIF(animate.exist.fig(), interval = 2, ani.width = 1000, movie.name = "exist_0.1_deHoop.gif")) ## ~9 seconds
+system.time(saveGIF(animate.exist.fig(), interval = 2, ani.width = 800, movie.name = "exist_0.1_deHoop.gif")) ## ~9 seconds
 
 # CHange working directory back to project directory
 setwd("~/range_kelp/")

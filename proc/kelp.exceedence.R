@@ -43,6 +43,10 @@ for(i in 0:5){
   hiRes_0.1 <- rbind(hiRes_0.1, dat)
 }
 
+# test <- filter(hiRes_inSitu, index == 130)
+# test <- melt(test[,c(4:369,371)], id.vars = "decade", variable.name = "doy", value.name = "temp")
+# ggplot(data = test, aes(x = doy, y = temp, group = decade)) +
+#   geom_line(aes(colour = decade))
 
 # 3. Calculate threshold exceedence stats  --------------------------------
 
@@ -111,9 +115,13 @@ exceedence.stats <- function(dat, threshold = 20, below = FALSE){
 
 ## Calculate exceedence stats ABOVE a threshold
 # In situ
+stats_inSitu_22 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 22, .parallel = T)
+stats_inSitu_21 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, threshold = 21, .parallel = T)
 stats_inSitu_20 <- ddply(hiRes_inSitu, .(index, decade), exceedence.stats, .parallel = T)
 
 # Static 0.1C
+stats_0.1_22 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 22, .parallel = T)
+stats_0.1_21 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 21, .parallel = T)
 stats_0.1_20 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, .parallel = T)
 
 ## Calculate exceedence stats BELOW a threshold
@@ -127,3 +135,5 @@ stats_0.1_16 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold =
 stats_0.1_15 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 15, below = TRUE, .parallel = T)
 stats_0.1_14 <- ddply(hiRes_0.1, .(index, decade), exceedence.stats, threshold = 14, below = TRUE, .parallel = T)
 
+# Check results
+# test <- filter(stats_inSitu_20, index == 129)

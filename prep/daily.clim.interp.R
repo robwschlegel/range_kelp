@@ -178,14 +178,45 @@ sites_trend <- data.frame(sites_trend)
 trend_hiRes <- data.frame(trend = interpp(x = sites_trend[, "lon"], y = sites_trend[, "lat"], sites_trend$temp,
                                     xo = outCoords$lon, yo = outCoords$lat, linear = TRUE, 
                                     extrap = FALSE, dupl = "mean")$z)
-  # Not currently filling in any gaps as they mostly exist due to sudden changes in trend size or direction (i.e. + or -)
+# Additional manual linear interpolation in gaps on the east coast
+  # Great care was taken when interpolating trends to ensure fidelity to sharp temperature gradients
+  # When uncertain, trends were regressed towards the 0.1C standard
+# The first couple of missing pixels caused by interpolation function
+trend_hiRes[2,] <- trend_hiRes[3,]+(trend_hiRes[3,]-trend_hiRes[4,])
+trend_hiRes[1,] <- trend_hiRes[2,]+(trend_hiRes[2,]-trend_hiRes[3,])
+# Missing pixels between Cape Columbine and Saldanha bay
+trend_hiRes[61,] <- trend_hiRes[60,]+(trend_hiRes[60,]-trend_hiRes[59,])
+trend_hiRes[62,] <- trend_hiRes[61,]+(trend_hiRes[61,]-trend_hiRes[60,])
+trend_hiRes[63,] <- trend_hiRes[62,]+(trend_hiRes[62,]-trend_hiRes[61,])
+# trend_hiRes[64,] <- trend_hiRes[63,]+(trend_hiRes[63,]-trend_hiRes[62,]) # Left blank
+trend_hiRes[65,] <- trend_hiRes[66,]-(trend_hiRes[67,]-trend_hiRes[66,])
+# Missing pixels at Cape Point
+trend_hiRes[86,] <- (trend_hiRes[85,]+(trend_hiRes[84,]))/2
+trend_hiRes[87,] <- trend_hiRes[86,]+(trend_hiRes[86,]-trend_hiRes[85,])
+trend_hiRes[88:89,] <- trend_hiRes[87,]
+trend_hiRes[89,] <- trend_hiRes[88,]+(trend_hiRes[88,]-trend_hiRes[87,])
+trend_hiRes[92,] <- trend_hiRes[93,]-trend_hiRes[94,]
+trend_hiRes[91,] <- trend_hiRes[92,]-trend_hiRes[94,]
+trend_hiRes[90,] <- trend_hiRes[91,]-trend_hiRes[94,]
+# Missing pixel at Hangklip
+trend_hiRes[101,] <- (trend_hiRes[100,] + trend_hiRes[102,])/2
+# Mssing pixels around Hermanus
+trend_hiRes[112,] <- (trend_hiRes[111,] + trend_hiRes[113,])/2
+trend_hiRes[114,] <- (trend_hiRes[113,] + trend_hiRes[115,])/2
+trend_hiRes[116:118,] <- (seq(trend_hiRes[119,], trend_hiRes[115,], length.out = 5))[4:2]
+# Gap after Tsitsikamma
+trend_hiRes[187:190,] <- (seq(trend_hiRes[191,], trend_hiRes[186,], length.out = 6))[5:2]
+# Missing bit before PE
+trend_hiRes[201:202,] <- (seq(trend_hiRes[200,], trend_hiRes[203,], length.out = 4))[2:3]
+# Missing stretch from PE to Dwesa
+trend_hiRes[214:234,] <- (seq(trend_hiRes[235,], trend_hiRes[213,], length.out = 23))[22:2]
+# Missing stretch around Cwebe
+trend_hiRes[248:258,] <- (seq(trend_hiRes[259,], trend_hiRes[247,], length.out = 13))[12:2]
+trend_hiRes[260:261,] <- (seq(trend_hiRes[259,], trend_hiRes[262,], length.out = 4))[2:3]
+# Missing stretch north of Cwebe
+trend_hiRes[276:280,] <- (seq(trend_hiRes[275,], trend_hiRes[281,], length.out = 7))[2:6]
+# Missing stretch from Richards Bay north
+trend_hiRes[325:347,] <- 0.1
+trend_hiRes <- data.frame(trend = trend_hiRes[-348,]) # This last dot is mostly over land
 save(trend_hiRes, file = "data/trend_hiRes.Rdata")
 
-# Project HiRes trends on HiRes data
-  # Rather run make this calculation in "proc/kelp.exceedence.R"
-# hiRes_real_1 <- daily_clim_hiRes[complete.cases(trend_hiRes$trend),][,3:368] + trend_hiRes$trend[complete.cases(trend_hiRes$trend)]
-# save(hiRes_real_1, file = "data/hiRes_real_1.Rdata") # These files are over 700kb, so better to not save them
-
-# Project statis trend on HiRes data
-  # Rather run this code in "proc/kelp.exceedence.R"
-# hiRes_0.1_1 <- data.frame(lon = daily_clim_hiRes$lon, lat = daily_clim_hiRes$lat, daily_clim_hiRes[,3:368] + 0.1)

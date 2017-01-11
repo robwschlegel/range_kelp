@@ -40,8 +40,14 @@ Projected range expansions of kelps in South Africa
 ## 2016/01/09
 * A few minor touch ups
 
-## 2016/01/11
+## 2016/01/10
 * Calculated kelp presence/ absence
 * Inserted kelp distribution into figures and animations
 * Wrote script to calculate binary existence of kelp
 * Created figures and animations focussing on De Hoop
+
+## 2016/01/11
+* Created figures and animations showing decadal trends
+* Created animations for differing thresholds
+* Improved daily temperature animation progress bar
+* Investigated issues with existence calculations

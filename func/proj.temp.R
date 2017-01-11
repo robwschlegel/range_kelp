@@ -47,8 +47,8 @@ proj.temp <- function(df, trend, dec){
 proj.temp.hiRes <- function(df, trend, dec){
   df2 <- df[colnames(df) != c("index", "lon", "lat")]
   if(trend == "in situ"){
-    df2 <- cbind(df2[complete.cases(trend_hiRes$trend),]+(trend_hiRes$trend[complete.cases(trend_hiRes$trend)]*dec), trend = "in situ", decade = dec)
-    df2 <- cbind(df[complete.cases(trend_hiRes$trend), colnames(df)==c("index", "lon", "lat")], df2)
+    df2 <- cbind(df2+(trend_hiRes$trend*dec), trend = "in situ", decade = dec)
+    df2 <- cbind(df[, colnames(df)==c("index", "lon", "lat")], df2)
   } else if(is.numeric(trend)){
     df2 <- cbind(df2+(trend*dec), trend = as.character(trend), decade = dec)
     df2 <- cbind(df[,colnames(df)==c("index", "lon", "lat")], df2)
