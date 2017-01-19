@@ -188,6 +188,10 @@ setwd("~/range_kelp/")
 # 4. Create de Hoop figures and GIFs --------------------------------------
 # The De Hoop figure requires enough fine tuning so as to warrant its own creation function
 
+# Scale colours
+scale_cols <- c("slateblue4", "slateblue4", "royalblue2", "royalblue2", "steelblue1", "steelblue1", 
+                "white", "pink1", "pink1", "salmon", "salmon")
+
 # Define the West Coast
 wc_lats <- c(-36, -33); wc_lons <- c(16, 22)
 
@@ -258,8 +262,16 @@ draw.trend.fig <- function(type){
           legend.box = "horizontal")
   print(sa_plot_trend)
 }
-draw.trend.fig(1)
 
+## Static figures
+# In situ
+draw.trend.fig(1)
+ggsave("graph/trend_inSitu_deHoop.png", height = 6, width = 10)
+# Static 0.1C
+draw.trend.fig(2)
+ggsave("graph/trend_0.1_deHoop.png", height = 6, width = 10)
+
+# Animations
 setwd("~/range_kelp/graph/")
 
 animate.trend.fig <- function() {

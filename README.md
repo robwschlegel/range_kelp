@@ -59,3 +59,7 @@ Projected range expansions of kelps in South Africa
 * Addressed existence issues
 * Improved De Hoop focus window
 * Created De Hoop version of all animations
+
+## 2016/01/19
+* Created .asc raster files for monthly and seasonal clims
+* First BIOMOD run for Ecklonia maxima

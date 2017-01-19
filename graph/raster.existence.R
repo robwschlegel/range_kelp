@@ -159,11 +159,11 @@ draw.exist.fig <- function(df, decade){
 ## Exceedence days ABOVE thresholds
 # In situ figures
 draw.exist.fig(exist_grid_inSitu, 0)
-ggsave("graph/exist_inSitu_0.png",  height = 6, width = 10)
+ggsave("graph/exist_inSitu_0.png", height = 6, width = 10)
 
 # Static 0.1C figures
 draw.exist.fig(exist_grid_0.1, 0)
-ggsave("graph/exist_0.1_0.png",  height = 6, width = 10)
+ggsave("graph/exist_0.1_0.png", height = 6, width = 10)
 
 
 # It doesn't appear possible to set an output directory within saveGIF
