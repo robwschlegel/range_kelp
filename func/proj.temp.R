@@ -12,6 +12,7 @@ library(doMC); doMC::registerDoMC(cores = 4)
 source("func/decadal.trend.R")
 load("~/SACTN/data/SACTNmonthly_v4.1.Rdata")
 load("data/trend_hiRes.Rdata")
+load("data/trend_pixel.Rdata")
 ## USED BY:
 #"proc/climate.projections.R"
 ## CREATES:
@@ -48,6 +49,21 @@ proj.temp.hiRes <- function(df, trend, dec){
   df2 <- df[colnames(df) != c("index", "lon", "lat")]
   if(trend == "in situ"){
     df2 <- cbind(df2+(trend_hiRes$trend*dec), trend = "in situ", decade = dec)
+    df2 <- cbind(df[, colnames(df)==c("index", "lon", "lat")], df2)
+  } else if(is.numeric(trend)){
+    df2 <- cbind(df2+(trend*dec), trend = as.character(trend), decade = dec)
+    df2 <- cbind(df[,colnames(df)==c("index", "lon", "lat")], df2)
+  } else{
+    stop("Wat doen jy?")
+  }
+  return(df2)
+}
+
+# For data frames with a full 366 day climatology
+proj.temp.pixel <- function(df, trend, dec){
+  df2 <- df[colnames(df) != c("index", "lon", "lat")]
+  if(trend == "in situ"){
+    df2 <- cbind(df2+(trend_pixel$trend*dec), trend = "in situ", decade = dec)
     df2 <- cbind(df[, colnames(df)==c("index", "lon", "lat")], df2)
   } else if(is.numeric(trend)){
     df2 <- cbind(df2+(trend*dec), trend = as.character(trend), decade = dec)
