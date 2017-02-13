@@ -7,6 +7,10 @@ Projected range expansions of kelps in South Africa
 * The "/graph" folder contains the files necessary to create maps etc., as well as other graphical outputs
 * The "/LaTeX" folder contains the files used to compile the manuscript
 
+## 2017/02/13
+* Created annual raster values
+* Created README file to explain file structure and naming conventions
+
 ## 2016/12/22
 * Created directory structure
 * Created initial and projected seasonal min/ max climatologies

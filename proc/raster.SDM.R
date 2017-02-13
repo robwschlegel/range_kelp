@@ -52,6 +52,11 @@ levels(monthly_clim_pixel$date) <- dates
 monthly_clim_pixel$month <- month(monthly_clim_pixel$date, label = T, abbr = T)
 monthly_clim_pixel <- ddply(monthly_clim_pixel, .(index, lon, lat, trend, decade, month), summarise, temp = mean(temp, na.rm = T), .parallel = T)
 
+# Annual clims
+annual_clim_pixel <- melt(pixel_all, id.vars = c("index", "lon", "lat", "trend", "decade"), value.name = "temp", variable.name = "date")
+annual_clim_pixel$year <- as.factor("Annual")
+annual_clim_pixel <- ddply(annual_clim_pixel, .(index, lon, lat, trend, decade, year), summarise, temp = mean(temp, na.rm = T), .parallel = T)
+
 # Seasonal min/ max values
 seas_clim_pixel <- monthly_clim_pixel
 seas_clim_pixel$seas[seas_clim_pixel$month %in% c("Jan","Feb","Mar")] <- "Summer"
@@ -89,6 +94,7 @@ stats_all$index2 <- as.factor(stats_all$index2)
 # Function to create and save raster
   # This function is designed to take a X_pixel file from above and create a raster file from it
 pixel_df <- filter(seas_clim_pixel, seas == "Sumax", decade == 0, trend == levels(trend)[2]) # Tester...
+pixel_df <- filter(monthly_clim_pixel, month == "Jan", decade == 0, trend == levels(trend)[2]) # Tester...
 raster.dat <- function(pixel_df){
   df <- droplevels(pixel_df)
   dat <- droplevels(df[,c(2,3,7)])
@@ -98,6 +104,23 @@ raster.dat <- function(pixel_df){
               filename = paste("data/raster/",levels(df$trend)[1],"/",levels(as.factor(df$decade))[1],"/",levels(df[,6])[1],".asc", sep = ""), 
               format = "ascii", overwrite = TRUE)
 }
+
+## Create rasters and save
+## NB: The errors produced by these functions appear to be erroneous as the output is correct
+# Monthly climatologies
+system.time(ddply(monthly_clim_pixel, .(trend, decade, month), raster.dat, .parallel = T)) # 19 seconds
+
+# Annual climatologies
+system.time(ddply(annual_clim_pixel, .(trend, decade, year), raster.dat, .parallel = T)) # 19 seconds
+
+# Seasonal climatologies
+system.time(ddply(seas_clim_pixel, .(trend, decade, seas), raster.dat, .parallel = T)) # 44 seconds
+
+# Threshold exceedences
+system.time(ddply(stats_all, .(trend, decade, index2), raster.dat, .parallel = T)) # 21 seconds
+
+# Bathymetry
+# raster.dat(grid_bathy, "bathy")
 
 # test <- filter(monthly_clim_pixel, decade == 0, trend == levels(trend)[1])
 # system.time(ddply(test, .(trend, decade, month), raster.dat, .parallel = T)) # 6 seconds
@@ -115,16 +138,3 @@ raster.dat <- function(pixel_df){
 #   "data/raster/in situ/0/Nov.asc",
 #   "data/raster/in situ/0/Dec.asc")
 # plot(test) # The errors produced by this function appear erroneous and may be an artefact of ddply
-
-## Create rasters and save
-# Monthly climatologies
-system.time(ddply(monthly_clim_pixel, .(trend, decade, month), raster.dat, .parallel = T)) # 19 seconds
-
-# Seasonal climatologies
-system.time(ddply(seas_clim_pixel, .(trend, decade, seas), raster.dat, .parallel = T)) # 44 seconds
-
-# Threshold exceedences
-system.time(ddply(stats_all, .(trend, decade, index2), raster.dat, .parallel = T)) # 21 seconds
-
-# Bathymetry
-# raster.dat(grid_bathy, "bathy")

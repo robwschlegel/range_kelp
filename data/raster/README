@@ -1,0 +1,48 @@
+------------------------------------------------------------------------
+The folders within this top directory each show which decadal projections are currently available for the 0.1 degree gridded SACTN data.
+
+------------------------------------------------------------------------
+The first folder 'in situ' contains projections based on the decadal trends found in the 25+ year time series from the SACTN dataset. THese are the 'ground truth' and may be taken to be more accurate of the long term trends along the coast than any remotely sensed product/ model. The trends are interpolated between the points where they occur so that each grid cell has a decadal trend. These trends are then projected in a linear fashion.
+
+------------------------------------------------------------------------
+The next folder, '0.1' contains the same data as the 'in situ', except the projected trend for each pixel is simply 0.1C, which is roughly the global decadal change signal.
+
+More projections will be added later in the year (2017).
+
+------------------------------------------------------------------------
+Within each of the aforementioned folders one will find six additional folders: '0', '1', '2', '3', '4' and '5'. Each folder contains within it coastal seawater temperature data projected x number of decades into the future with y trend line. Where x is the name of the sub-folder, and y is the name of the main folder. For example, the file 'raster/0.1/1/Annual.asc' is the annual mean temperature for each pixel projected 10 years from now (i.e. the temperatures are projected 1 decade into the future), based on a trend of 0.1C at every pixel. The '0' folder contains the temperatures seen presently.
+
+------------------------------------------------------------------------
+Within each subfolder one will find a host of 'x.asc' files. The explanation for each file type is as follows:
+
+Annual - The single mean temperature value for each pixel. Because the pixels do not represent time series, but rather mean overall temperatures per pixel, the annual mean is not several years of data, but rather the mean of the seasonal signal found at the given pixel.
+
+Jan - The mean temperature at this pixel during the daily January climatology. Meaning, the mean of the mean daily temperature during each calendar month in January as determined by binning all calendar days together throughout time for each time series.
+Feb - February
+Mar - March
+Apr - April
+May - May
+Jun - June
+Jul - July
+Aug - August
+Sep - September
+Oct - October
+Nov - November
+Dec - December
+
+Sumax - The maximum temperature experienced by this pixel during the Summer months ("Jan","Feb","Mar"). Note that I do not necessarily agree with this definition of what months constitue summer, I think it should be "Dec","Jan","Feb". The work these data are based on used the following seasonal definitions. And so I have left it that way for now. Also note that these are austral seasons.
+Sumin - The minimum temperature during summer
+Amax - Autumn max ("Apr","May","Jun")
+Amin - Autumn min
+Wmax - Winter max ("Jul","Aug","Sep")
+Wmin - Winter min
+Spmax - Spring max ("Oct","Nov","Dec")
+Spmin - Spring min
+
+above 20 - This is the number of days that temperatures at this pixel exceed 20C.
+above 21 - Exceed 21C
+below 16 - The number of days below 16C
+below 15 - Below 15C
+
+
+
