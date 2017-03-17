@@ -75,3 +75,6 @@ Projected range expansions of kelps in South Africa
 * Created raster files for all months, seasonal stats and threshold exceedences
 * Projected all rasters 0, 1, 2, 3, 4, and 5 decades for 0.1C and in situ trends
 * Ran BIOMOD projections for _E. maxima_ at present and 50 years of in situ trends
+
+## 2017/03/17
+* Minor changes

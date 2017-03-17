@@ -14,7 +14,7 @@ library(reshape2)
 ## USED BY:
 #
 ## CREATES:
-#
+# Model predictions of species distributions
 #############################################################################
 
 # 1. Load data ------------------------------------------------------------
@@ -26,6 +26,7 @@ kelp_meta <- read.csv("~/Private/range_kelp/metadata/58sites.csv")
 kelp <- read.csv("~/Private/range_kelp/data/seaweed.csv")
 colnames(kelp) <- c("species", seq(1,58))
 kelp <- melt(kelp, id.vars = "species", variable.name = "index", value.name = "presence")
+colnames(kelp) <- c("species", "index", "presence")
 kelp <- merge(kelp, kelp_meta, by = "index")
 kelp <- kelp[order(kelp[,1]),]
 
@@ -37,10 +38,10 @@ pal <- droplevels(filter(kelp, species %in% c("LAMPAL")))
 load("~/SACTN/metadata/site_list_v4.1.Rdata")
 
 # Abiotic raster data
-  # The file naming convention is: '1/2_3.asc'
-    # 1 = The decades of temperature projection applied before the stats were calculated
-    # 2 = The statistic in the raster
-    # 3 = The type of projection used
+  # The file naming convention is: '1/2/3.asc'
+    # 1 = The type of projection used
+    # 2 = The decades of temperature projection applied to calculate the stats
+    # 3 = The statistic in the raster
       # NB: Note that the raster package fills in blank spaces with '_'
       # This makes the naming convention somewhat less clear
 expl <- raster::stack(
@@ -63,7 +64,7 @@ plot(expl)
 
 # Extract variabes for modelling
 resp_max <- as.matrix(max[3]) # Binary species presence
-resp_pal <- as.matrix(pal[3]) 
+# resp_pal <- as.matrix(pal[3]) 
 coords <- as.matrix(max[4:5]) # lon/ lat of each count. Same for all species.
 
 library(biomod2) ## NB: This package masks functions so may interfere with other scripts

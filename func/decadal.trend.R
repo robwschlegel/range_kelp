@@ -27,9 +27,9 @@ decadal.trend <- function(df) {
   if(!("num" %in% colnames(df))){
     df$num <- seq(1, length(df$date))
   }
-    dt <- round(as.numeric(coef(gls(
-      temp ~ num, correlation = corARMA(form = ~ 1 | year, p = 2),
-      method = "REML", data = df, na.action = na.exclude
-    ))[2] * 120), 3)
+  dt <- round(as.numeric(coef(gls(
+    temp ~ num, correlation = corARMA(form = ~ 1 | year, p = 2),
+    method = "REML", data = df, na.action = na.exclude
+  ))[2] * 120), 3)
   return(dt)
 }
