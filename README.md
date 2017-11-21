@@ -78,3 +78,6 @@ Projected range expansions of kelps in South Africa
 
 ## 2017/03/17
 * Minor changes
+
+## 2017/11/21
+* Added an SD raster layer

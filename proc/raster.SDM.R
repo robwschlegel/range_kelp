@@ -5,13 +5,11 @@
 # 2. Prep values for rasterising
 # 3. Create rasters for SDM
 ## DEPENDS ON:
-library(plyr)
-library(dplyr)
-library(reshape2)
-library(lubridate)
+library(doMC); doMC::registerDoMC(3)
 library(sp)
 library(raster)
-library(doMC); doMC::registerDoMC(4)
+library(lubridate)
+library(tidyverse)
 ## USED BY:
 # "proc/kelp.models.R"
 ## CREATES:
@@ -46,8 +44,12 @@ stdCRS <- "+proj=utm +zone=34 +south +ellps=WGS84 +datum=WGS84 +units=km +no_def
 # Dates for converting Julian date to yy/mm/dd
 dates <- as.factor(seq(as.Date("2016/01/01"), as.Date("2016/12/31"), by = "day")) # 2016 used as this is the most recent leap year
 
+## NB: This is currently broken
+  ## Needs to have plyr steps phased out
 # Monthly clims
-monthly_clim_pixel <- melt(pixel_all, id.vars = c("index", "lon", "lat", "trend", "decade"), value.name = "temp", variable.name = "date")
+monthly_clim_pixel <- pixel_all %>% 
+  gather(-index, -lon, -lat, -trend, -decade, key = "date", value = "temp")
+# monthly_clim_pixel <- melt(pixel_all, id.vars = c("index", "lon", "lat", "trend", "decade"), value.name = "temp", variable.name = "date")
 levels(monthly_clim_pixel$date) <- dates
 monthly_clim_pixel$month <- month(monthly_clim_pixel$date, label = T, abbr = T)
 monthly_clim_pixel <- ddply(monthly_clim_pixel, .(index, lon, lat, trend, decade, month), summarise, temp = mean(temp, na.rm = T), .parallel = T)
@@ -89,12 +91,20 @@ stats_all <- rbind(stats_21, stats_20, stats_16, stats_15)
 stats_all <- stats_all[,c(1:3,10:11,14,5)]
 stats_all$index2 <- as.factor(stats_all$index2)
 
+# Calculate SD for each pixel
+sd_pixel <- pixel_all %>% 
+  gather(-index, -lon, -lat, -trend, -decade, key = "date", value = "temp") %>% 
+  filter(trend == "in situ", decade == 0) %>% 
+  group_by(index, lon, lat, trend, decade) %>% 
+  summarise(sd = sd(temp))
+
+
 # 3. Create rasters for SDM ---------------------------------------------
 
 # Function to create and save raster
   # This function is designed to take a X_pixel file from above and create a raster file from it
-pixel_df <- filter(seas_clim_pixel, seas == "Sumax", decade == 0, trend == levels(trend)[2]) # Tester...
-pixel_df <- filter(monthly_clim_pixel, month == "Jan", decade == 0, trend == levels(trend)[2]) # Tester...
+# pixel_df <- filter(seas_clim_pixel, seas == "Sumax", decade == 0, trend == levels(trend)[2]) # Tester...
+# pixel_df <- filter(monthly_clim_pixel, month == "Jan", decade == 0, trend == levels(trend)[2]) # Tester...
 raster.dat <- function(pixel_df){
   df <- droplevels(pixel_df)
   dat <- droplevels(df[,c(2,3,7)])
@@ -119,6 +129,16 @@ system.time(ddply(seas_clim_pixel, .(trend, decade, seas), raster.dat, .parallel
 # Threshold exceedences
 system.time(ddply(stats_all, .(trend, decade, index2), raster.dat, .parallel = T)) # 21 seconds
 
+# SD per pixel
+  # NB: different than above as it does not include trend or decade or date columns
+sd_rast <- sd_pixel %>% 
+  ungroup() %>% 
+  select(lon, lat, sd) %>% 
+  rename(X = lon, Y = lat, Z = sd) %>% 
+  rasterFromXYZ(res = c(0.1, 0.1), digits = 1)
+writeRaster(sd_rast, filename = "data/raster/sd_rast.asc", 
+            format = "ascii", overwrite = TRUE)
+
 # Bathymetry
 # raster.dat(grid_bathy, "bathy")
 
@@ -137,4 +157,5 @@ system.time(ddply(stats_all, .(trend, decade, index2), raster.dat, .parallel = T
 #   "data/raster/in situ/0/Oct.asc",
 #   "data/raster/in situ/0/Nov.asc",
 #   "data/raster/in situ/0/Dec.asc")
+
 # plot(test) # The errors produced by this function appear erroneous and may be an artefact of ddply
